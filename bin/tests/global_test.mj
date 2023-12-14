@@ -1,0 +1,60 @@
+program MJGlobalTest
+namespace Addition{
+
+	{
+	
+	int sum(int z, int d)
+	{
+		return z + d;
+	}
+	
+
+	int inkrement(int a, int inc) 
+		int pom; 
+	{
+		if(inc == 1) pom = 1;
+		else if(inc == 2) pom = a;
+
+		return sum(a,pom); // ovo je komentar
+	}
+	
+	}
+}
+
+int x; int y;
+
+bool verify() {
+	return false;
+}	
+{
+	int main() {
+		if(1!=1) print(-6);
+		else print(0);  
+		
+		ibool = false;
+		for(i=0; i < 5; i++){
+			if(i == 2) ibool = true;
+		}
+		
+		if(ibool)
+			if(i == 5) print(1);
+			else print(-1); 	
+		a = 2;	
+		niz = new int[3];
+		niz[0] = 1 * a;
+		niz[1] = 2 * a;
+		niz[2] = Addition::sum(niz[1], niz[0]) * a + 1;
+		
+		print(eol);
+		print('n')
+		for (i=0; i < 10; ) {
+			if(i == 3)
+			{
+				i++;
+				continue;
+			}
+			if(i == 4) break;
+			i = Addition::inkrement(i, 1);
+		}
+	}
+}
