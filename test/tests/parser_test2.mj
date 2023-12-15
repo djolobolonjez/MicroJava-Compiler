@@ -1,0 +1,49 @@
+program test2
+
+// Nadogradjen test1 samo su dodate definicije metoda sa praznim telom zbog testiranja manjih celina
+
+namespace TestNamespace
+
+{
+	const int c = 3, d = 4;
+	const char e = 'e';
+	const bool namespaceTest = true;
+	
+	int f, g, h[];
+	{
+	
+	}
+
+}
+const int i = 5, j = 6;
+const char a = 'a';
+const bool validTest = false;
+int x, y;
+int z[], w[], k[];
+{
+	void f1() 
+	
+	int f1_a1, f2_a1;
+	int f1_a3;
+	{
+	
+	}
+	
+	void f2(int f2_arg1[], int f2_arg2, char f2_arg3)
+	
+	char f2_a1, f2_a2;
+	bool f2_a3; 
+	{
+	
+	}
+	
+	int f3(int f3_arg1[], int f3_arg2[], int f3_arg3) {
+	
+	}
+	int main() 
+	
+	int main_var;
+	{
+	
+	}
+}

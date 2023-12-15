@@ -1,0 +1,26 @@
+program test1
+
+// Test program koji testira deklaraciju globalnih promenljivih (i nizovskih)
+// kao i promenljivih deklarisanih unutar definisanog prostora imena
+
+namespace TestNamespace
+
+{
+	const int c = 3, d = 4;
+	const char e = 'e';
+	const bool namespaceTest = true;
+	
+	int f, g, h[];
+	{
+	
+	}
+
+}
+const int i = 5, j = 6;
+const char a = 'a';
+const bool validTest = false;
+int x, y;
+int z[], w[], k[];
+{
+
+}

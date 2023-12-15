@@ -1,0 +1,60 @@
+program test3
+
+// Nadogradjeni test2 za proveru razlicitih iskaza, a pogotovo if-else kontrolnih struktura
+
+// U ovom testu u aritmetickim izrazima i logickim uslovima korisceni su samo brojevi, karakteri i bool-ovi
+
+namespace TestNamespace
+
+{
+	const int c = 3, d = 4;
+	const char e = 'e';
+	const bool namespaceTest = true;
+	
+	int f, g, h[];
+	{
+	
+	}
+
+}
+const int i = 5, j = 6;
+const char a = 'a';
+const bool validTest = false;
+int x, y;
+int z[], w[], k[];
+{
+	void f1() 
+	
+	int f1_a1, f2_a1;
+	int f1_a3;
+	{
+		if (3 > 2) break;
+		else return;
+	}
+	
+	void f2(int f2_arg1[], int f2_arg2, char f2_arg3)
+	
+	char f2_a1, f2_a2;
+	bool f2_a3; 
+	{
+		if (-10 + 5 * 2 <= 0 || true && 3 > 2 + 1) continue;
+		else {
+			if (2 * 2 >= 3) {
+				if (true) break;
+			}
+			else {
+				if ('a' < 'b') continue;
+			}
+		}
+	}
+	
+	int f3(int f3_arg1[], int f3_arg2[], int f3_arg3) {
+		if (2 > 1) return 3 + 5;
+	}
+	int main() 
+	
+	int main_var;
+	{
+		if (1 < 2) return -1;
+	}
+}
