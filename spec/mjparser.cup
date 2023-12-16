@@ -58,9 +58,11 @@ terminal COLON, DOT, SEMI, ASSIGN, COMMA;
 terminal LSQUARE, RSQUARE, LPAREN, RPAREN, LBRACE, RBRACE;
 terminal BOOLEAN, CHAR, NUMBER;
 terminal IDENT;
+terminal NEW;
 
 nonterminal Program;
 nonterminal NamespaceDeclList, ConstVarDeclList;
+nonterminal Namespace;
 nonterminal ConstDecl, VarDecl, MethodDecl;
 nonterminal Type, MethodType;
 nonterminal MethodVarDeclList;
@@ -69,14 +71,22 @@ nonterminal ConstDeclList, VarDeclList, MethodDeclList;
 nonterminal FormPars, FormParsList;
 nonterminal StatementList, Statement, Matched, Unmatched;
 nonterminal Condition, Expr, CondTerm, CondFact, Term, Factor;
-nonterminal Relop, Addop, Mulop;
+nonterminal Relop, Addop, Mulop, Assignop;
+nonterminal DesignatorDecl, Designator, DesignatorList;
+nonterminal ActPars, ActParsList;
+nonterminal Label;
+nonterminal DesignatorStatement, DesignatorStmtList;
+nonterminal ForDesignatorStmtList, ForCondition;
+nonterminal IfCondition;
 
 Program ::= PROG IDENT NamespaceDeclList ConstVarDeclList LBRACE MethodDeclList RBRACE;
 
-NamespaceDeclList ::= NAMESPACE IDENT LBRACE ConstVarDeclList LBRACE MethodDeclList RBRACE RBRACE
-					|
-					/* epsilon */
-					;
+NamespaceDeclList ::= NamespaceDeclList Namespace
+		           	|
+		           	/* epsilon */
+		           	;
+
+Namespace ::= NAMESPACE IDENT LBRACE ConstVarDeclList LBRACE MethodDeclList RBRACE RBRACE;
 
 ConstVarDeclList ::= ConstVarDeclList ConstDecl
 				   |
@@ -149,12 +159,16 @@ Statement ::= Matched
 			Unmatched
 			;
 			
-Unmatched ::= IF LPAREN Condition RPAREN Statement
+Unmatched ::= IfCondition Statement
 			|
-			IF LPAREN Condition RPAREN Matched ELSE Unmatched
+			IfCondition Matched ELSE Unmatched
+			|
+			FOR LPAREN ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Unmatched
 			;
 			    
-Matched ::= IF LPAREN Condition RPAREN Matched ELSE Matched
+Matched ::= DesignatorStatement SEMI
+			|
+			IfCondition Matched ELSE Matched
 			|
 			BREAK SEMI
 			|
@@ -163,11 +177,32 @@ Matched ::= IF LPAREN Condition RPAREN Matched ELSE Matched
 			RETURN Expr:returnExpr SEMI
 			|
 			RETURN SEMI
+			|
+			READ LPAREN Designator RPAREN SEMI
+			|
+			PRINT LPAREN Expr:e RPAREN SEMI
+			|
+			PRINT LPAREN Expr:e COMMA NUMBER RPAREN SEMI
+			|
+			FOR LPAREN ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Matched
 			| 
 			LBRACE StatementList RBRACE
 			;
 			
+IfCondition ::= (IfCondition) IF LPAREN Condition RPAREN;
 			
+ForDesignatorStmtList ::= ForDesignatorStmtList COMMA DesignatorStatement
+						 |
+						 DesignatorStatement 
+						 |
+						 /* epsilon */
+						 ;
+			
+ForCondition ::= CondFact
+			   |
+			   /* epsilon */
+			   ;
+
 Condition ::= Condition OR CondTerm 
 			|
 			CondTerm
@@ -197,15 +232,73 @@ Term ::= Term:fterm Mulop Factor:f
 	   Factor:f
 	   ;
 	   
-Factor ::= NUMBER
+Factor ::= DesignatorDecl 
+		 | 
+		 NUMBER
 		 |
 		 CHAR
 	   	 |
 	   	 BOOLEAN
 	   	 |
+	   	 NEW Type:factorType LSQUARE Expr:e RSQUARE
+	   	 |
+	   	 NEW Type:factorType LPAREN RPAREN
+	   	 |
+	   	 NEW Type:factorType LPAREN ActPars RPAREN
+	   	 |
 	   	 LPAREN Expr RPAREN
 	   	 ;
 	   	 
+DesignatorDecl ::= Designator 
+				 | 
+				 Designator LPAREN RPAREN
+				 |
+				 Designator LPAREN ActPars RPAREN
+	   	 		 ;
+	   	 		 
+Designator ::= IDENT:outerTypeName COLON COLON IDENT:innerName DesignatorList
+			 |
+			 IDENT:identName DesignatorList
+			 ;
+			 
+DesignatorList ::= DesignatorList DOT IDENT:id
+				 |
+				 DesignatorList LSQUARE Expr:e RSQUARE
+				 |
+				 /* epsilon */
+				 ;
+				 
+DesignatorStatement ::= Designator:d Assignop Expr:e
+					  |
+					  Designator:d LPAREN RPAREN
+					  |
+					  Designator:d LPAREN ActPars RPAREN
+					  |
+					  Designator:d INC
+					  |
+					  Designator:d DEC
+					  |
+					  LSQUARE DesignatorStmtList MUL Designator:d1 RSQUARE ASSIGN Designator:d2
+					  ;
+				 
+DesignatorStmtList ::= DesignatorStmtList COMMA 
+					 |
+					 DesignatorStmtList Designator:d COMMA
+					 |
+					 /* epsilon */
+					 ;
+				 
+ActPars ::= Expr:e ActParsList;
+
+ActParsList ::= ActParsList COMMA Expr:e
+			  | 
+			  /* epsilon */
+			  ;
+				 
+Label ::= IDENT:id;
+
+Assignop ::= ASSIGN;
+	   	 		 
 Relop ::= EQ | NEQ | GT | GTE | LT | LTE;
 
 Addop ::= PLUS | MINUS;
