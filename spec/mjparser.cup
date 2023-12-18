@@ -44,6 +44,8 @@ scan with {:
 	return s;
 :}
 
+/* Terminals */
+
 terminal PROG, NAMESPACE;
 terminal IF, ELSE, BREAK, CONTINUE;
 terminal FOR;
@@ -56,9 +58,14 @@ terminal AND, OR;
 terminal INC, DEC;
 terminal COLON, DOT, SEMI, ASSIGN, COMMA;
 terminal LSQUARE, RSQUARE, LPAREN, RPAREN, LBRACE, RBRACE;
-terminal BOOLEAN, CHAR, NUMBER;
-terminal IDENT;
 terminal NEW;
+terminal String IDENT;
+terminal Integer NUMBER;
+terminal Character CHAR;
+terminal Boolean BOOLEAN;
+
+
+/* Non-terminals */
 
 nonterminal Program;
 nonterminal NamespaceDeclList, ConstVarDeclList;
@@ -68,8 +75,9 @@ nonterminal Type, MethodType;
 nonterminal MethodVarDeclList;
 nonterminal ConstTypeList;
 nonterminal ConstDeclList, VarDeclList, MethodDeclList;
-nonterminal FormPars, FormParsList;
-nonterminal StatementList, Statement, Matched, Unmatched;
+nonterminal LastVarDecl, MultipleVarDecl;	
+nonterminal FormPars, FormParsList, FormParamDecl;
+nonterminal StatementList, Statement;
 nonterminal Condition, Expr, CondTerm, CondFact, Term, Factor;
 nonterminal Relop, Addop, Mulop, Assignop;
 nonterminal DesignatorDecl, Designator, DesignatorList;
@@ -78,6 +86,10 @@ nonterminal Label;
 nonterminal DesignatorStatement, DesignatorStmtList;
 nonterminal ForDesignatorStmtList, ForCondition;
 nonterminal IfCondition;
+
+/* Precedences */
+
+precedence left ELSE;
 
 Program ::= PROG IDENT NamespaceDeclList ConstVarDeclList LBRACE MethodDeclList RBRACE;
 
@@ -97,6 +109,30 @@ ConstVarDeclList ::= ConstVarDeclList ConstDecl
 			
 ConstDecl ::= CONST Type:constType IDENT:constName ASSIGN ConstTypeList ConstDeclList SEMI;
 
+
+VarDecl ::= Type:varType VarDeclList;
+	  	  
+VarDeclList ::= MultipleVarDecl VarDeclList
+			  |
+			  LastVarDecl
+			  ;
+			  
+MultipleVarDecl ::= IDENT:varName COMMA 
+				  |
+				  IDENT:varArrayName LSQUARE RSQUARE COMMA
+				  |
+				  error COMMA:l
+				  {: parser.report_error("Izvrsen oporavak do , u liniji " + lleft, null); :}
+				  ;
+				  
+LastVarDecl ::= IDENT:varName SEMI
+			  |
+			  IDENT:varArrayName LSQUARE RSQUARE SEMI
+			  |
+			  error SEMI:l
+			  {: parser.report_error("Izvrsen oporavaka do ; u liniji " + lleft, null); :}
+			  ;
+
 ConstTypeList ::= NUMBER | CHAR | BOOLEAN;
 
 ConstDeclList ::= ConstDeclList COMMA IDENT:constName ASSIGN ConstTypeList
@@ -108,18 +144,6 @@ Type ::= IDENT:typeName
 	   |
 	   IDENT:outerTypeName COLON COLON IDENT:innerTypeName
 	   ;
-	   
-VarDecl ::= Type:varType IDENT:varName VarDeclList SEMI
-    	  |
-    	  Type:varArrayType IDENT:varArrayName LSQUARE RSQUARE VarDeclList SEMI
-	  	  ;
-
-VarDeclList ::= VarDeclList COMMA IDENT:varName
-			  |
-			  VarDeclList COMMA IDENT:varArrayName LSQUARE RSQUARE
-			  |
-			  /* epsilon */
-			  ;
 			  
 MethodDeclList ::= MethodDeclList MethodDecl 
   				 |
@@ -127,6 +151,7 @@ MethodDeclList ::= MethodDeclList MethodDecl
   				 ;
   				 
 MethodDecl ::= MethodType IDENT LPAREN FormPars RPAREN MethodVarDeclList LBRACE StatementList RBRACE;
+			 
 
 MethodVarDeclList ::= MethodVarDeclList VarDecl
 				   |
@@ -135,40 +160,39 @@ MethodVarDeclList ::= MethodVarDeclList VarDecl
 
 MethodType ::= Type | VOID;
 
-FormPars ::= Type:paramType IDENT:paramName FormParsList 
-		   |
-		   Type:paramArrayType IDENT:paramArrayName LSQUARE RSQUARE FormParsList
+FormPars ::= FormParsList 
 		   |
 		   /* epsilon */
 		   ;
+		   
+FormParamDecl ::= Type:paramType IDENT:paramName 
+			    |
+			    Type:paramArrayType IDENT:paramArrayName LSQUARE RSQUARE
+			    ;
 
-FormParsList ::= FormParsList COMMA Type:paramType IDENT:paramName
+FormParsList ::= FormParamDecl COMMA FormParsList
 			   |
-			   FormParsList COMMA Type:paramArrayType IDENT:paramArrayName LSQUARE RSQUARE
+			   FormParamDecl
 			   |
-			   /* epsilon */
+			   error COMMA:l
+			   {: parser.report_error("Izvrsen oporavak do , u liniji " + lleft, null); :}
+			   FormParsList
+			   |
+			   error:l
+			   {: parser.report_error("Izvrsen oporavak do ) u liniji " + lleft, null); :}
 			   ;
+			   
 			   
 StatementList ::= StatementList Statement
 			    |
 			    /* epsilon */
 			    ;
-			    
-Statement ::= Matched
+			    			    
+Statement ::= DesignatorStatement SEMI
 			|
-			Unmatched
-			;
-			
-Unmatched ::= IfCondition Statement
+			IfCondition Statement
 			|
-			IfCondition Matched ELSE Unmatched
-			|
-			FOR LPAREN ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Unmatched
-			;
-			    
-Matched ::= DesignatorStatement SEMI
-			|
-			IfCondition Matched ELSE Matched
+			IfCondition Statement ELSE Statement
 			|
 			BREAK SEMI
 			|
@@ -184,12 +208,20 @@ Matched ::= DesignatorStatement SEMI
 			|
 			PRINT LPAREN Expr:e COMMA NUMBER RPAREN SEMI
 			|
-			FOR LPAREN ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Matched
-			| 
+			FOR LPAREN ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Statement
+			|
 			LBRACE StatementList RBRACE
+			|
+			error SEMI:l
+			{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null); :}
 			;
 			
-IfCondition ::= (IfCondition) IF LPAREN Condition RPAREN;
+IfCondition ::= IF LPAREN Condition RPAREN
+			  |
+			  IF LPAREN error RPAREN:l
+			  {: parser.report_error("Izvrsen oporavak do ) u liniji " + lleft, null); :}
+			  ;
+			  
 			
 ForDesignatorStmtList ::= ForDesignatorStmtList COMMA DesignatorStatement
 						 |

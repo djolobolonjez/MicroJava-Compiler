@@ -50,6 +50,13 @@ import java_cup.runtime.Symbol;
 "for" 		{ return new_symbol(sym.FOR, yytext()); }
 "static" 	{ return new_symbol(sym.STATIC, yytext()); }
 "namespace" { return new_symbol(sym.NAMESPACE, yytext()); }
+"new" 		{ return new_symbol(sym.NEW, yytext()); }
+
+'.'			{ return new_symbol(sym.CHAR, yytext().charAt(1)); }
+
+"true"		{ return new_symbol(sym.BOOLEAN, true); }
+"false"		{ return new_symbol(sym.BOOLEAN, false); }
+
 "+" 		{ return new_symbol(sym.PLUS, yytext()); }
 "-"			{ return new_symbol(sym.MINUS, yytext()); }
 "*"			{ return new_symbol(sym.MUL, yytext()); }
@@ -57,10 +64,10 @@ import java_cup.runtime.Symbol;
 "%"			{ return new_symbol(sym.MOD, yytext()); }
 "=="		{ return new_symbol(sym.EQ, yytext()); }
 "!="		{ return new_symbol(sym.NEQ, yytext()); }
-">"			{ return new_symbol(sym.GT, yytext()); }
 ">="		{ return new_symbol(sym.GTE, yytext()); }
-"<"			{ return new_symbol(sym.LT, yytext()); }
+">"			{ return new_symbol(sym.GT, yytext()); }
 "<="		{ return new_symbol(sym.LTE, yytext()); }
+"<"			{ return new_symbol(sym.LT, yytext()); }
 "&&"		{ return new_symbol(sym.AND, yytext()); }
 "||"		{ return new_symbol(sym.OR, yytext()); }
 "++"		{ return new_symbol(sym.INC, yytext()); }
@@ -77,25 +84,14 @@ import java_cup.runtime.Symbol;
 "{" 		{ return new_symbol(sym.LBRACE, yytext()); }
 "}"			{ return new_symbol(sym.RBRACE, yytext()); }
 
-"true" | "false"	{ return new_symbol(sym.BOOLEAN, yytext()); }
-
 "//" { yybegin(COMMENT); }
 <COMMENT> . { yybegin(COMMENT); }
 <COMMENT> "\r\n" { yybegin(YYINITIAL); }
-
-"\' ( [ -~&&[^'] ] ) \'"	{ return new_symbol(sym.STRING, yytext()); }
 
 [0-9]+  { return new_symbol(sym.NUMBER, Integer.parseInt(yytext())); }
 [a-zA-Z][a-zA-Z0-9_]* 	{return new_symbol (sym.IDENT, yytext()); }
 
 . { System.err.println("Leksicka greska ("+yytext()+") u liniji "+(yyline+1)); }
-
-
-
-
-
-
-
 
 
 
