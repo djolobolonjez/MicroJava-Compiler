@@ -86,253 +86,274 @@ nonterminal Label;
 nonterminal DesignatorStatement, DesignatorStmtList;
 nonterminal ForDesignatorStmtList, ForCondition;
 nonterminal IfCondition;
+nonterminal ArraySquares;
 
 /* Precedences */
 
 precedence left ELSE;
 
-Program ::= PROG IDENT NamespaceDeclList ConstVarDeclList LBRACE MethodDeclList RBRACE;
+Program ::= (Program) PROG IDENT NamespaceDeclList ConstVarDeclList LBRACE MethodDeclList RBRACE;
 
-NamespaceDeclList ::= NamespaceDeclList Namespace
+NamespaceDeclList ::= (MultipleNamespaceDecl) NamespaceDeclList Namespace
 		           	|
-		           	/* epsilon */
+		           	(NoNamespaceDecl) /* epsilon */
 		           	;
 
-Namespace ::= NAMESPACE IDENT LBRACE ConstVarDeclList LBRACE MethodDeclList RBRACE RBRACE;
+Namespace ::= (Namespace) NAMESPACE IDENT LBRACE ConstVarDeclList LBRACE MethodDeclList RBRACE RBRACE;
 
-ConstVarDeclList ::= ConstVarDeclList ConstDecl
+ConstVarDeclList ::= (DeclListForConst) ConstVarDeclList ConstDecl
 				   |
-				   ConstVarDeclList VarDecl
+				   (DeclListForVar) ConstVarDeclList VarDecl
 				   |
-				   /* epsilon */
+				   (NoDeclList) /* epsilon */
 				   ; 
 			
-ConstDecl ::= CONST Type:constType IDENT:constName ASSIGN ConstTypeList ConstDeclList SEMI;
+ConstDecl ::= (ConstDecl) CONST Type:constType IDENT:constName ASSIGN ConstTypeList ConstDeclList SEMI;
 
 
-VarDecl ::= Type:varType VarDeclList;
+VarDecl ::= (VarDecl) Type:varType VarDeclList;
 	  	  
-VarDeclList ::= MultipleVarDecl VarDeclList
+VarDeclList ::= (MultipleVariables) MultipleVarDecl VarDeclList
 			  |
-			  LastVarDecl
+			  (SingleVariable) LastVarDecl
 			  ;
 			  
-MultipleVarDecl ::= IDENT:varName COMMA 
+MultipleVarDecl ::= (MultipleVariablesDecl) IDENT:varName ArraySquares COMMA
 				  |
-				  IDENT:varArrayName LSQUARE RSQUARE COMMA
-				  |
-				  error COMMA:l
+				  (VariableDeclCommaError) error COMMA:l
 				  {: parser.report_error("Izvrsen oporavak do , u liniji " + lleft, null); :}
 				  ;
 				  
-LastVarDecl ::= IDENT:varName SEMI
+LastVarDecl ::= (LastVariableDecl) IDENT:varName ArraySquares SEMI
 			  |
-			  IDENT:varArrayName LSQUARE RSQUARE SEMI
-			  |
-			  error SEMI:l
+			  (VariableDeclSemiError) error SEMI:l
 			  {: parser.report_error("Izvrsen oporavaka do ; u liniji " + lleft, null); :}
 			  ;
 
-ConstTypeList ::= NUMBER | CHAR | BOOLEAN;
+ArraySquares ::= (Squares) LSQUARE RSQUARE 
+			   |
+			   (NoSquares) /* epsilon */
+			   ;
 
-ConstDeclList ::= ConstDeclList COMMA IDENT:constName ASSIGN ConstTypeList
-				|
-				/* epsilon */
+ConstTypeList ::= (ConstInt) NUMBER 
+				| (ConstChar) CHAR 
+				| (ConstBool) BOOLEAN
 				;
 
-Type ::= IDENT:typeName
+ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA IDENT:constName ASSIGN ConstTypeList
+				|
+				(NoConstDeclarations) /* epsilon */
+				;
+
+Type ::= (Identifier) IDENT:typeName
 	   |
-	   IDENT:outerTypeName COLON COLON IDENT:innerTypeName
+	   (IdentifierWithNamespace) IDENT:outerTypeName COLON COLON IDENT:innerTypeName
 	   ;
 			  
-MethodDeclList ::= MethodDeclList MethodDecl 
+MethodDeclList ::= (MethodDeclarations) MethodDeclList MethodDecl 
   				 |
-  				 /* epsilon */
+  				 (NoMethodDeclarations) /* epsilon */
   				 ;
   				 
-MethodDecl ::= MethodType IDENT LPAREN FormPars RPAREN MethodVarDeclList LBRACE StatementList RBRACE;
+MethodDecl ::= (MethodDecl) MethodType IDENT LPAREN FormPars RPAREN MethodVarDeclList LBRACE StatementList RBRACE;
 			 
 
-MethodVarDeclList ::= MethodVarDeclList VarDecl
+MethodVarDeclList ::= (MethodVariableDeclarations) MethodVarDeclList VarDecl
 				   |
-				   /* epsilon */
+				   (NoMethodVariableDeclarations) /* epsilon */
 				   ; 
 
-MethodType ::= Type | VOID;
+MethodType ::= (MethodTypeName) Type 
+			 | 
+			 (MethodVoidType) VOID
+			 ;
 
-FormPars ::= FormParsList 
+FormPars ::= (FormalParamsList) FormParsList 
 		   |
-		   /* epsilon */
+		   (NoFormalParams) /* epsilon */
 		   ;
 		   
-FormParamDecl ::= Type:paramType IDENT:paramName 
-			    |
-			    Type:paramArrayType IDENT:paramArrayName LSQUARE RSQUARE
-			    ;
+FormParamDecl ::= (FormalParamDecl) Type:paramType IDENT:paramName ArraySquares;
 
-FormParsList ::= FormParamDecl COMMA FormParsList
+FormParsList ::= (MultipleFormalParams) FormParamDecl COMMA FormParsList
 			   |
-			   FormParamDecl
+			   (SingleFormalParam) FormParamDecl
 			   |
-			   error COMMA:l
+			   (FormalParamsCommaError) error COMMA:l
 			   {: parser.report_error("Izvrsen oporavak do , u liniji " + lleft, null); :}
 			   FormParsList
 			   |
-			   error:l
+			   (FormalParamsParenError) error:l
 			   {: parser.report_error("Izvrsen oporavak do ) u liniji " + lleft, null); :}
 			   ;
 			   
 			   
-StatementList ::= StatementList Statement
+StatementList ::= (MultipleStatements) StatementList Statement
 			    |
-			    /* epsilon */
+			    (NoStatement) /* epsilon */
 			    ;
 			    			    
-Statement ::= DesignatorStatement SEMI
+Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
-			IfCondition Statement
+			(IfStatement) IfCondition Statement
 			|
-			IfCondition Statement ELSE Statement
+			(IfElseStatement) IfCondition Statement ELSE Statement
 			|
-			BREAK SEMI
+			(BreakStatement) BREAK SEMI
 			|
-			CONTINUE SEMI
+			(ContinueStatement) CONTINUE SEMI
 			|
-			RETURN Expr:returnExpr SEMI
+			(ReturnExpressionStatement) RETURN Expr:returnExpr SEMI
 			|
-			RETURN SEMI
+			(ReturnEmptyStatement) RETURN SEMI
 			|
-			READ LPAREN Designator RPAREN SEMI
+			(ReadStatement) READ LPAREN Designator RPAREN SEMI
 			|
-			PRINT LPAREN Expr:e RPAREN SEMI
+			(PrintStatement) PRINT LPAREN Expr:e RPAREN SEMI
 			|
-			PRINT LPAREN Expr:e COMMA NUMBER RPAREN SEMI
+			(PrintExpressionStatement) PRINT LPAREN Expr:e COMMA NUMBER RPAREN SEMI
 			|
-			FOR LPAREN ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Statement
+			(ForStatement) FOR LPAREN ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Statement
 			|
-			LBRACE StatementList RBRACE
+			(NestedStatementList) LBRACE StatementList RBRACE
 			|
-			error SEMI:l
+			(StatementError) error SEMI:l
 			{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null); :}
 			;
 			
-IfCondition ::= IF LPAREN Condition RPAREN
+IfCondition ::= (IfWithCondition) IF LPAREN Condition RPAREN
 			  |
-			  IF LPAREN error RPAREN:l
+			  (ErrorInIfCondition) IF LPAREN error RPAREN:l
 			  {: parser.report_error("Izvrsen oporavak do ) u liniji " + lleft, null); :}
 			  ;
 			  
 			
-ForDesignatorStmtList ::= ForDesignatorStmtList COMMA DesignatorStatement
+ForDesignatorStmtList ::= (ForMultipleStatements) ForDesignatorStmtList COMMA DesignatorStatement
 						 |
-						 DesignatorStatement 
+						 (ForSingleStatement) DesignatorStatement 
 						 |
-						 /* epsilon */
+						 (ForNoStatements) /* epsilon */
 						 ;
 			
-ForCondition ::= CondFact
+ForCondition ::= (ForWithCondition) CondFact
 			   |
-			   /* epsilon */
+			   (ForNoCondition) /* epsilon */
 			   ;
 
-Condition ::= Condition OR CondTerm 
+Condition ::= (MultipleConditionTerms) Condition OR CondTerm 
 			|
-			CondTerm
+			(SingleConditionTerm) CondTerm
 			;
 			   
-CondTerm ::= CondTerm AND CondFact
+CondTerm ::= (MultipleConditionFactors) CondTerm AND CondFact
 		   |
-		   CondFact
+		   (SingleConditionFactor) CondFact
 		   ;
 		   
-CondFact ::= Expr:exp
+CondFact ::= (SingleExprCond) Expr:exp
 		   |
-		   Expr:exp1 Relop Expr:exp2
+		   (MultipleExprCond)Expr:exp1 Relop Expr:exp2
 		   ;
 		   
-Expr ::= Expr:texp Addop Term:t
+Expr ::= (ExprMultipleTerm) Expr:texp Addop Term:t
 	   |
-	   Expr:texp Addop MINUS Term:t
+	   (ExprMultipleTermMinus) Expr:texp Addop MINUS Term:t
 	   |
-	   Term:t
+	   (ExprSingleTerm) Term:t
 	   | 
-	   MINUS Term:t
+	   (ExprSingleTermMinus) MINUS Term:t
 	   ;
 	   
-Term ::= Term:fterm Mulop Factor:f
+Term ::= (TermMultipleFactors) Term:fterm Mulop Factor:f
 	   |
-	   Factor:f
+	   (TermSingleFactor) Factor:f
 	   ;
 	   
-Factor ::= DesignatorDecl 
+Factor ::= (FactorDesignator) DesignatorDecl 
 		 | 
-		 NUMBER
-		 |
-		 CHAR
+		 (FactorConstant) ConstTypeList
 	   	 |
-	   	 BOOLEAN
+	   	 (FactorNewArray) NEW Type:factorType LSQUARE Expr:e RSQUARE
 	   	 |
-	   	 NEW Type:factorType LSQUARE Expr:e RSQUARE
+	   	 (FactorNewTypeNoParams) NEW Type:factorType LPAREN RPAREN
 	   	 |
-	   	 NEW Type:factorType LPAREN RPAREN
+	   	 (FactorNewType) NEW Type:factorType LPAREN ActPars RPAREN
 	   	 |
-	   	 NEW Type:factorType LPAREN ActPars RPAREN
-	   	 |
-	   	 LPAREN Expr RPAREN
+	   	 (FactorExpression) LPAREN Expr RPAREN
 	   	 ;
 	   	 
-DesignatorDecl ::= Designator 
+DesignatorDecl ::= (DesignatorDeclaration) Designator 
 				 | 
-				 Designator LPAREN RPAREN
+				 (DesignatorFunctionCallNoParams) Designator LPAREN RPAREN
 				 |
-				 Designator LPAREN ActPars RPAREN
+				 (DesignatorFunctionCall) Designator LPAREN ActPars RPAREN
 	   	 		 ;
 	   	 		 
-Designator ::= IDENT:outerTypeName COLON COLON IDENT:innerName DesignatorList
+Designator ::= (DesignatorNamespace) IDENT:outerTypeName COLON COLON IDENT:innerName DesignatorList
 			 |
-			 IDENT:identName DesignatorList
+			 (DesignatorGlobal) IDENT:identName DesignatorList
 			 ;
 			 
-DesignatorList ::= DesignatorList DOT IDENT:id
+DesignatorList ::= (DesignatorListDot) DesignatorList DOT IDENT:id
 				 |
-				 DesignatorList LSQUARE Expr:e RSQUARE
+				 (DesignatorListArray) DesignatorList LSQUARE Expr:e RSQUARE
 				 |
-				 /* epsilon */
+				 (NoDesignatorList) /* epsilon */
 				 ;
 				 
-DesignatorStatement ::= Designator:d Assignop Expr:e
+DesignatorStatement ::= (DesignatorAssignment) Designator:d Assignop Expr:e
 					  |
-					  Designator:d LPAREN RPAREN
+					  (DesignatorFunctionNoParams) Designator:d LPAREN RPAREN
 					  |
-					  Designator:d LPAREN ActPars RPAREN
+					  (DesignatorFunctionAndParams) Designator:d LPAREN ActPars RPAREN
 					  |
-					  Designator:d INC
+					  (DesignatorIncrement) Designator:d INC
 					  |
-					  Designator:d DEC
+					  (DesignatorDecrement) Designator:d DEC
 					  |
-					  LSQUARE DesignatorStmtList MUL Designator:d1 RSQUARE ASSIGN Designator:d2
+					  (DesignatorUnpacking) LSQUARE DesignatorStmtList MUL Designator:d1 RSQUARE ASSIGN Designator:d2
 					  ;
 				 
-DesignatorStmtList ::= DesignatorStmtList COMMA 
+DesignatorStmtList ::= (DesignatorListEmpty) DesignatorStmtList COMMA 
 					 |
-					 DesignatorStmtList Designator:d COMMA
+					 (DesignatorListElement) DesignatorStmtList Designator:d COMMA
 					 |
-					 /* epsilon */
+					 (NoDesignatorStmtList) /* epsilon */
 					 ;
 				 
-ActPars ::= Expr:e ActParsList;
+ActPars ::= (ActPars) Expr:e ActParsList;
 
-ActParsList ::= ActParsList COMMA Expr:e
+ActParsList ::= (ActualParamsList) ActParsList COMMA Expr:e
 			  | 
+			  (NoActualParamsList)
 			  /* epsilon */
 			  ;
 				 
-Label ::= IDENT:id;
+Label ::= (Label) IDENT:id;
 
-Assignop ::= ASSIGN;
+Assignop ::= (Assignop) ASSIGN;
 	   	 		 
-Relop ::= EQ | NEQ | GT | GTE | LT | LTE;
+Relop ::= (Equal) EQ 
+		| 
+		(NotEqual) NEQ 
+		| 
+		(Greater) GT 
+		|
+		(GreaterOrEqual)  GTE 
+		|
+		(Less) LT 
+		| 
+		(LessOrEqual) LTE
+		;
 
-Addop ::= PLUS | MINUS;
+Addop ::= (Add) PLUS 
+		| 
+		(Subtract) MINUS
+		;
 
-Mulop ::= MUL | DIV | MOD;
+Mulop ::= (Multiply) MUL 
+		| 
+		(Divide) DIV 
+		| 
+		(Modulo) MOD
+		;
