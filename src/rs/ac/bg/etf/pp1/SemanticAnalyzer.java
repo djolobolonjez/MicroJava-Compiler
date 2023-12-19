@@ -14,6 +14,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	private boolean errorDetected = false;
 	private boolean variableIsArray = false;
 	private Struct currentType = null;
+	private Obj currentMethod = null;
 	
 	Logger log = Logger.getLogger(getClass());
 
@@ -105,6 +106,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(DesignatorGlobal designator) {
 		designator.obj = Tab.find(designator.getIdentName());
+		
+		// Cisto probavanje
+		if (designator.obj.getType().getKind() == Struct.Array) {
+			report_info("Pristup nekom elementu niza " + designator.getIdentName(), designator);
+		}
 	}
 	
 	public void visit(DesignatorFunctionNoParams function) {
@@ -113,6 +119,48 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (functionNode.getKind() != Obj.Meth) {
 			report_error("Simbol " + functionNode.getName() + " ne predstavlja metodu!", function);
 		}
+		else {
+			report_info("Poziv funkcije " + functionNode.getName(), function);
+		}
+	}
+	
+	private Obj methodDetected(String methodName, Struct type, SyntaxNode info) {
+		Obj methodNode = Tab.insert(Obj.Meth, methodName, type);
+		
+		Tab.openScope();
+		report_info("Deklarisana metoda " + methodName, info);
+		return methodNode;
+	}
+	
+	public void visit(MethodTypeName method) {
+		method.obj = methodDetected(method.getMethodName(), method.getType().struct, method);
+		currentMethod = method.obj;
+	}
+	
+	public void visit(MethodVoidType method) {
+		method.obj = methodDetected(method.getMethodName(), new Struct(Struct.None), method);
+		currentMethod = method.obj;
+	}
+	
+	public void visit(MethodDecl method) {
+		Tab.chainLocalSymbols(currentMethod);
+		Tab.closeScope();
+	}
+	
+	public void visit(FormParamDecl formalParam) {
+		String paramName = formalParam.getParamName();
+		Struct formalParamType = currentType;
+
+		if (variableIsArray) {
+			formalParamType = new Struct(Struct.Array, currentType);
+		}
+		Tab.insert(Obj.Var, formalParam.getParamName(), formalParamType);
+		
+		report_info("Pronadjen parametar " + paramName + 
+					(variableIsArray ? "[]" : "") + " funkcije " 
+					+ currentMethod.getName(), formalParam);
+		
+		variableIsArray = false;
 	}
 }
 

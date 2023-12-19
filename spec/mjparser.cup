@@ -27,6 +27,7 @@ parser code {:
     }
 
     public void report_error(String message, Object info) {
+    	errorDetected = true;
     	StringBuilder msg = new StringBuilder(message); 
     	if (info instanceof Symbol)
             msg.append (" na liniji ").append(((Symbol)info).left);
@@ -177,7 +178,7 @@ FormPars ::= (FormalParamsList) FormParsList
 		   (NoFormalParams) /* epsilon */
 		   ;
 		   
-FormParamDecl ::= (FormalParamDecl) Type:paramType IDENT:paramName ArraySquares;
+FormParamDecl ::= (FormParamDecl) Type:paramType IDENT:paramName ArraySquares;
 
 FormParsList ::= (MultipleFormalParams) FormParamDecl COMMA FormParsList
 			   |
