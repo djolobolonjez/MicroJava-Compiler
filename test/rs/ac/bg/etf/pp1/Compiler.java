@@ -14,8 +14,9 @@ import org.apache.log4j.xml.DOMConfigurator;
 
 import rs.ac.bg.etf.pp1.ast.Program;
 import rs.ac.bg.etf.pp1.util.Log4JUtils;
+import rs.etf.pp1.symboltable.Tab;
 
-public class MJParserTest {
+public class Compiler {
 
 	static {
 		DOMConfigurator.configure(Log4JUtils.instance().findLoggerConfigFile());
@@ -24,11 +25,18 @@ public class MJParserTest {
 	
 	public static void main(String[] args) throws Exception {
 		
-		Logger log = Logger.getLogger(MJParserTest.class);
+		Logger log = Logger.getLogger(Compiler.class);
+		String filename = null;
+		if (args.length >= 1) {
+			filename = args[0];
+		} else {
+			log.error("Missing prgoram arguments! Usage: Compiler <source-file> <object-file>");
+		}
+		
 		
 		Reader br = null;
 		try {
-			File sourceCode = new File("test/tests/parser_test3.mj");
+			File sourceCode = new File(filename);
 			log.info("Compiling source file: " + sourceCode.getAbsolutePath());
 			
 			br = new BufferedReader(new FileReader(sourceCode));
@@ -37,18 +45,23 @@ public class MJParserTest {
 			MJParser p = new MJParser(lexer);
 	        Symbol s = p.parse();  //pocetak parsiranja
 	        
-	        Program prog = (Program)(s.value); 
-			// ispis sintaksnog stabla
-			log.info(prog.toString(""));
-			log.info("===================================");
+	        Program prog = null;
+	        
+	        if (!p.errorDetected) 
+	        {
+	        	prog = (Program)(s.value); 
+				Tab.init();
 
-			// ispis prepoznatih programskih konstrukcija
-			RuleVisitor v = new RuleVisitor();
-			prog.traverseBottomUp(v); 
-	      
-/*			log.info(" Print count calls = " + v.printCallCount);
-
-			log.info(" Deklarisanih promenljivih ima = " + v.varDeclCount);*/
+				// ispis prepoznatih programskih konstrukcija
+				SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+				prog.traverseBottomUp(semanticAnalyzer); 
+				
+				Tab.dump();
+				
+				log.info(prog.toString(""));
+				log.info("===================================");
+	        }
+			
 			
 		} 
 		finally {

@@ -9,7 +9,7 @@ import rs.ac.bg.etf.pp1.ast.*;
 parser code {:
 
 	Logger log = Logger.getLogger(getClass());
-   
+   	boolean errorDetected = false;
    
     // slede redefinisani metodi za prijavu gresaka radi izmene teksta poruke
      
@@ -67,11 +67,9 @@ terminal Boolean BOOLEAN;
 
 /* Non-terminals */
 
-nonterminal Program;
 nonterminal NamespaceDeclList, ConstVarDeclList;
 nonterminal Namespace;
-nonterminal ConstDecl, VarDecl, MethodDecl;
-nonterminal Type, MethodType;
+nonterminal ConstDecl, VarDecl;
 nonterminal MethodVarDeclList;
 nonterminal ConstTypeList;
 nonterminal ConstDeclList, VarDeclList, MethodDeclList;
@@ -80,7 +78,7 @@ nonterminal FormPars, FormParsList, FormParamDecl;
 nonterminal StatementList, Statement;
 nonterminal Condition, Expr, CondTerm, CondFact, Term, Factor;
 nonterminal Relop, Addop, Mulop, Assignop;
-nonterminal DesignatorDecl, Designator, DesignatorList;
+nonterminal DesignatorDecl, DesignatorList;
 nonterminal ActPars, ActParsList;
 nonterminal Label;
 nonterminal DesignatorStatement, DesignatorStmtList;
@@ -88,11 +86,17 @@ nonterminal ForDesignatorStmtList, ForCondition;
 nonterminal IfCondition;
 nonterminal ArraySquares;
 
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type;
+
 /* Precedences */
 
 precedence left ELSE;
 
-Program ::= (Program) PROG IDENT NamespaceDeclList ConstVarDeclList LBRACE MethodDeclList RBRACE;
+Program ::= (Program) PROG ProgramName:p NamespaceDeclList ConstVarDeclList LBRACE MethodDeclList RBRACE;
+
+ProgramName ::= (ProgramName) IDENT:programName;
 
 NamespaceDeclList ::= (MultipleNamespaceDecl) NamespaceDeclList Namespace
 		           	|
@@ -135,9 +139,9 @@ ArraySquares ::= (Squares) LSQUARE RSQUARE
 			   (NoSquares) /* epsilon */
 			   ;
 
-ConstTypeList ::= (ConstInt) NUMBER 
-				| (ConstChar) CHAR 
-				| (ConstBool) BOOLEAN
+ConstTypeList ::= (ConstInt) NUMBER:value 
+				| (ConstChar) CHAR:value
+				| (ConstBool) BOOLEAN:value
 				;
 
 ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA IDENT:constName ASSIGN ConstTypeList
@@ -155,7 +159,7 @@ MethodDeclList ::= (MethodDeclarations) MethodDeclList MethodDecl
   				 (NoMethodDeclarations) /* epsilon */
   				 ;
   				 
-MethodDecl ::= (MethodDecl) MethodType IDENT LPAREN FormPars RPAREN MethodVarDeclList LBRACE StatementList RBRACE;
+MethodDecl ::= (MethodDecl) MethodTypeAndName LPAREN FormPars RPAREN MethodVarDeclList LBRACE StatementList RBRACE;
 			 
 
 MethodVarDeclList ::= (MethodVariableDeclarations) MethodVarDeclList VarDecl
@@ -163,9 +167,9 @@ MethodVarDeclList ::= (MethodVariableDeclarations) MethodVarDeclList VarDecl
 				   (NoMethodVariableDeclarations) /* epsilon */
 				   ; 
 
-MethodType ::= (MethodTypeName) Type 
+MethodTypeAndName ::= (MethodTypeName) Type:retType IDENT:methodName
 			 | 
-			 (MethodVoidType) VOID
+			 (MethodVoidType) VOID IDENT:methodName
 			 ;
 
 FormPars ::= (FormalParamsList) FormParsList 
@@ -215,7 +219,7 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(ForStatement) FOR LPAREN ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Statement
 			|
-			(NestedStatementList) LBRACE StatementList RBRACE
+			(BlockStatementList) LBRACE StatementList RBRACE
 			|
 			(StatementError) error SEMI:l
 			{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null); :}
