@@ -77,9 +77,9 @@ nonterminal ConstDeclList, VarDeclList, MethodDeclList;
 nonterminal LastVarDecl, MultipleVarDecl;	
 nonterminal FormPars, FormParsList, FormParamDecl;
 nonterminal StatementList, Statement;
-nonterminal Condition, Expr, CondTerm, CondFact, Term, Factor;
+nonterminal Condition, CondTerm, CondFact;
 nonterminal Relop, Addop, Mulop, Assignop;
-nonterminal DesignatorDecl, DesignatorList;
+nonterminal DesignatorList;
 nonterminal ActPars, ActParsList;
 nonterminal Label;
 nonterminal DesignatorStatement, DesignatorStmtList;
@@ -89,7 +89,7 @@ nonterminal ArraySquares;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Expr, Term, Factor;
 
 /* Precedences */
 
@@ -262,8 +262,6 @@ CondFact ::= (SingleExprCond) Expr:exp
 		   
 Expr ::= (ExprMultipleTerm) Expr:texp Addop Term:t
 	   |
-	   (ExprMultipleTermMinus) Expr:texp Addop MINUS Term:t
-	   |
 	   (ExprSingleTerm) Term:t
 	   | 
 	   (ExprSingleTermMinus) MINUS Term:t
@@ -274,25 +272,22 @@ Term ::= (TermMultipleFactors) Term:fterm Mulop Factor:f
 	   (TermSingleFactor) Factor:f
 	   ;
 	   
-Factor ::= (FactorDesignator) DesignatorDecl 
+Factor ::= (FactorDesignatorVar) Designator:varName
+		 |
+		 (FactorDesignatorFunction) Designator LPAREN ActPars RPAREN
 		 | 
-		 (FactorConstant) ConstTypeList
+		 (FactorConstNum) NUMBER:value
+		 |
+		 (FactorConstChar) CHAR:value
+		 |
+		 (FactorConstBoolean) BOOLEAN:value
 	   	 |
 	   	 (FactorNewArray) NEW Type:factorType LSQUARE Expr:e RSQUARE
-	   	 |
-	   	 (FactorNewTypeNoParams) NEW Type:factorType LPAREN RPAREN
 	   	 |
 	   	 (FactorNewType) NEW Type:factorType LPAREN ActPars RPAREN
 	   	 |
 	   	 (FactorExpression) LPAREN Expr RPAREN
 	   	 ;
-	   	 
-DesignatorDecl ::= (DesignatorDeclaration) Designator 
-				 | 
-				 (DesignatorFunctionCallNoParams) Designator LPAREN RPAREN
-				 |
-				 (DesignatorFunctionCall) Designator LPAREN ActPars RPAREN
-	   	 		 ;
 	   	 		 
 Designator ::= (DesignatorNamespace) IDENT:outerTypeName COLON COLON IDENT:innerName DesignatorList
 			 |
@@ -308,9 +303,7 @@ DesignatorList ::= (DesignatorListDot) DesignatorList DOT IDENT:id
 				 
 DesignatorStatement ::= (DesignatorAssignment) Designator:d Assignop Expr:e
 					  |
-					  (DesignatorFunctionNoParams) Designator:d LPAREN RPAREN
-					  |
-					  (DesignatorFunctionAndParams) Designator:d LPAREN ActPars RPAREN
+					  (FunctionCall) Designator:d LPAREN ActPars RPAREN
 					  |
 					  (DesignatorIncrement) Designator:d INC
 					  |
@@ -326,12 +319,14 @@ DesignatorStmtList ::= (DesignatorListEmpty) DesignatorStmtList COMMA
 					 (NoDesignatorStmtList) /* epsilon */
 					 ;
 				 
-ActPars ::= (ActPars) Expr:e ActParsList;
+ActPars ::= (ActualPars) ActParsList
+		  |
+		  (NoActualPars) /* epsilon */
+		  ;
 
-ActParsList ::= (ActualParamsList) ActParsList COMMA Expr:e
+ActParsList ::= (ActualParams) ActParsList COMMA Expr:e
 			  | 
-			  (NoActualParamsList)
-			  /* epsilon */
+			  (ActualParam) Expr:e
 			  ;
 				 
 Label ::= (Label) IDENT:id;

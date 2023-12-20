@@ -1,5 +1,7 @@
 package rs.ac.bg.etf.pp1;
 
+import java.util.ArrayList;
+
 import org.apache.log4j.Logger;
 
 import rs.ac.bg.etf.pp1.ast.VisitorAdaptor;
@@ -15,6 +17,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	private boolean variableIsArray = false;
 	private Struct currentType = null;
 	private Obj currentMethod = null;
+	private ArrayList<Struct> actualParams = new ArrayList<>();
 	
 	Logger log = Logger.getLogger(getClass());
 
@@ -113,8 +116,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 	}
 	
-	public void visit(DesignatorFunctionNoParams function) {
+	public void visit(FunctionCall function) {
 		Obj functionNode = function.getDesignator().obj;
+		currentMethod = functionNode;
 		
 		if (functionNode.getKind() != Obj.Meth) {
 			report_error("Simbol " + functionNode.getName() + " ne predstavlja metodu!", function);
@@ -145,6 +149,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(MethodDecl method) {
 		Tab.chainLocalSymbols(currentMethod);
 		Tab.closeScope();
+		currentMethod = null;
 	}
 	
 	public void visit(FormParamDecl formalParam) {
@@ -161,6 +166,85 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 					+ currentMethod.getName(), formalParam);
 		
 		variableIsArray = false;
+	}
+	
+	public void visit(ActualParam param) {
+		report_info("Argument funkcije tipa " + 
+				param.getExpr().struct.getKind(), param);
+		actualParams.add(param.getExpr().struct);
+	}
+	
+	public void visit(ActualParams param) {
+		report_info("Argument funkcije tipa " + 
+				param.getExpr().struct.getKind(), param);
+		actualParams.add(param.getExpr().struct);
+	}
+	
+	public void visit(ExprSingleTerm expr) {
+		expr.struct = expr.getTerm().struct;
+	}
+	
+	public void visit(ExprSingleTermMinus minusExpr) {
+		if (minusExpr.getTerm().struct != Tab.intType) {
+			report_error("Negirana vrednost mora biti celobrojnog tipa!", minusExpr);
+		} else {
+			minusExpr.struct = Tab.intType;
+		}
+	}
+	
+	public void visit(ExprMultipleTerm multipleTerms) {
+		Struct texp = multipleTerms.getExpr().struct, term = multipleTerms.getTerm().struct;
+		
+		if (texp.equals(term) && texp == Tab.intType) {
+			multipleTerms.struct = Tab.intType;
+		} else {
+			report_error("Nekompatibilni tipovi u izrazu za sabiranje!", multipleTerms);
+		}
+	}
+	
+	public void visit(TermSingleFactor singleFactor) {
+		singleFactor.struct = singleFactor.getFactor().struct;
+	}
+	
+	public void visit(TermMultipleFactors factors) {
+		Struct fterm = factors.getTerm().struct, factor = factors.getFactor().struct;
+		
+		if (fterm.equals(factor) && fterm == Tab.intType) {
+			factors.struct = Tab.intType;
+		} else {
+			report_error("Nekompatibilni tipovi u izrazu za mnozenje!", factors);
+			factors.struct = Tab.noType;
+		}
+	}
+	
+	public void visit(FactorExpression expression) {
+		expression.struct = expression.getExpr().struct;
+	}
+	
+	public void visit(FactorNewArray arrayFactor) {
+		// dodati proveru za expression unutar []
+		arrayFactor.struct = new Struct(Struct.Array, arrayFactor.getType().struct);
+	}
+	
+	public void visit(FactorDesignatorVar var) {
+		var.struct = var.getDesignator().obj.getType();
+	}
+	
+	public void visit(FactorDesignatorFunction func) {
+		// proveriti da li tip parametra odgovara tipu stvarnog argumenta
+		func.struct = func.getDesignator().obj.getType();
+	}
+	
+	public void visit(FactorConstNum factor) {
+		factor.struct = Tab.intType;
+	}
+	
+	public void visit(FactorConstChar factor) {
+		factor.struct = Tab.charType;
+	}
+	
+	public void visit(FactorConstBoolean factor) {
+		factor.struct = boolType;
 	}
 }
 
