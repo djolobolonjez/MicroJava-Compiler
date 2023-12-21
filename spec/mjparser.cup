@@ -72,14 +72,13 @@ nonterminal NamespaceDeclList, ConstVarDeclList;
 nonterminal Namespace;
 nonterminal ConstDecl, VarDecl;
 nonterminal MethodVarDeclList;
-nonterminal ConstTypeList;
+nonterminal ConstAssign;
 nonterminal ConstDeclList, VarDeclList, MethodDeclList;
 nonterminal LastVarDecl, MultipleVarDecl;	
 nonterminal FormPars, FormParsList, FormParamDecl;
 nonterminal StatementList, Statement;
 nonterminal Condition, CondTerm, CondFact;
 nonterminal Relop, Addop, Mulop, Assignop;
-nonterminal DesignatorList;
 nonterminal ActPars, ActParsList;
 nonterminal Label;
 nonterminal DesignatorStatement, DesignatorStmtList;
@@ -113,9 +112,15 @@ ConstVarDeclList ::= (DeclListForConst) ConstVarDeclList ConstDecl
 				   (NoDeclList) /* epsilon */
 				   ; 
 			
-ConstDecl ::= (ConstDecl) CONST Type:constType IDENT:constName ASSIGN ConstTypeList ConstDeclList SEMI;
+ConstDecl ::= (ConstDecl) CONST Type:constType ConstAssign ConstDeclList SEMI;
 
-
+ConstAssign ::= (ConstInt) IDENT:constName ASSIGN NUMBER:value 
+			  |
+			  (ConstChar) IDENT:constName ASSIGN CHAR:value
+			  |
+			  (ConstBool) IDENT:constName ASSIGN BOOLEAN:value
+			  ;
+			  
 VarDecl ::= (VarDecl) Type:varType VarDeclList;
 	  	  
 VarDeclList ::= (MultipleVariables) MultipleVarDecl VarDeclList
@@ -140,12 +145,7 @@ ArraySquares ::= (Squares) LSQUARE RSQUARE
 			   (NoSquares) /* epsilon */
 			   ;
 
-ConstTypeList ::= (ConstInt) NUMBER:value 
-				| (ConstChar) CHAR:value
-				| (ConstBool) BOOLEAN:value
-				;
-
-ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA IDENT:constName ASSIGN ConstTypeList
+ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA ConstAssign
 				|
 				(NoConstDeclarations) /* epsilon */
 				;
@@ -289,17 +289,14 @@ Factor ::= (FactorDesignatorVar) Designator:varName
 	   	 (FactorExpression) LPAREN Expr RPAREN
 	   	 ;
 	   	 		 
-Designator ::= (DesignatorNamespace) IDENT:outerTypeName COLON COLON IDENT:innerName DesignatorList
+Designator ::= (DesignatorNamespace) IDENT:outerTypeName COLON COLON IDENT:innerName 
 			 |
-			 (DesignatorGlobal) IDENT:identName DesignatorList
+			 (DesignatorVariable) IDENT:identName 
+			 |
+			 (DesignatorListArray) Designator LSQUARE Expr:e RSQUARE
+			 |
+			 (DesignatorListDot) Designator DOT IDENT:id
 			 ;
-			 
-DesignatorList ::= (DesignatorListDot) DesignatorList DOT IDENT:id
-				 |
-				 (DesignatorListArray) DesignatorList LSQUARE Expr:e RSQUARE
-				 |
-				 (NoDesignatorList) /* epsilon */
-				 ;
 				 
 DesignatorStatement ::= (DesignatorAssignment) Designator:d Assignop Expr:e
 					  |
