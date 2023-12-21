@@ -77,7 +77,6 @@ nonterminal ConstDeclList, VarDeclList, MethodDeclList;
 nonterminal LastVarDecl, MultipleVarDecl;	
 nonterminal FormPars, FormParsList, FormParamDecl;
 nonterminal StatementList, Statement;
-nonterminal Condition, CondTerm, CondFact;
 nonterminal Relop, Addop, Mulop, Assignop;
 nonterminal ActPars, ActParsList;
 nonterminal Label;
@@ -89,6 +88,7 @@ nonterminal ArraySquares;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Expr, Term, Factor;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Condition, CondFact, CondTerm;
 
 /* Precedences */
 
@@ -231,7 +231,7 @@ IfCondition ::= (IfWithCondition) IF LPAREN Condition RPAREN
 			  (ErrorInIfCondition) IF LPAREN error RPAREN:l
 			  {: parser.report_error("Izvrsen oporavak do ) u liniji " + lleft, null); :}
 			  ;
-			  
+			 
 			
 ForDesignatorStmtList ::= (ForMultipleStatements) ForDesignatorStmtList COMMA DesignatorStatement
 						 |

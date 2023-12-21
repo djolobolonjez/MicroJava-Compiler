@@ -1,6 +1,8 @@
 package rs.ac.bg.etf.pp1;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
 import org.apache.log4j.Logger;
 
@@ -161,6 +163,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		
 		if (array.getExpr().struct != Tab.intType) {
 			report_error("Izraz koji predstavlja indeks niza mora biti celobrojnog tipa!", array);
+			array.obj = new Obj(Obj.Elem, arrayNode.getName(), Tab.noType);
 			return;
 		}
 		report_info("Pristup nekom elementu niza " + arrayNode.getName(), array);
@@ -168,15 +171,45 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		array.obj = new Obj(Obj.Elem, arrayNode.getName(), arrayNode.getType().getElemType());
 	}
 	
+	private boolean isFunction(Obj obj, SyntaxNode info) {
+		if (obj.getKind() != Obj.Meth) {
+			report_error("Simbol " + obj.getName() + " ne predstavlja metodu!", info);
+			return false;
+		}
+		report_info("Poziv funkcije " + obj.getName(), info);
+		return true;
+	}
+	
+	private void compareFunctionParams(Obj obj, SyntaxNode info) {
+		Collection<Obj> formalParams = obj.getLocalSymbols();
+		int numParams = obj.getLevel();
+		
+		if (numParams != actualParams.size()) {
+			report_error("Broj formalnih argumenata ne odgovara broju stvarnih parametara funkcije", info);
+			return;
+		}
+		
+		Iterator<Obj> iter = formalParams.iterator();
+		
+		for (int i = 0; i < numParams; i++) {
+			Obj nextParam = iter.next();
+			if (!nextParam.getType().assignableTo(actualParams.get(i))) {
+				report_error("Tip formalnog parametra i stvarnog argumenta se ne poklapa", info);
+			} else {
+				report_info("Dobar argument", null);
+			}
+		}
+		actualParams.clear();
+	}
+	
 	public void visit(FunctionCall function) {
 		Obj functionNode = function.getDesignator().obj;
 		
-		if (functionNode.getKind() != Obj.Meth) {
-			report_error("Simbol " + functionNode.getName() + " ne predstavlja metodu!", function);
+		if (!isFunction(functionNode, function)) {
+			return;
 		}
-		else {
-			report_info("Poziv funkcije " + functionNode.getName(), function);
-		}
+		
+		compareFunctionParams(functionNode, function);
 	}
 	
 	private Obj methodDetected(String methodName, Struct type, SyntaxNode info) {
@@ -223,6 +256,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 					+ currentMethod.getName(), formalParam);
 		
 		variableIsArray = false;
+	}
+	
+	public void visit(FormalParamsList formalParams) {
+		currentMethod.setLevel(Tab.currentScope.getnVars());
+	}
+	
+	public void visit(NoFormalParams noParams) {
+		currentMethod.setLevel(Tab.currentScope.getnVars());
 	}
 	
 	public void visit(ActualParam param) {
@@ -288,9 +329,20 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(FactorDesignatorFunction func) {
-		// proveriti da li tip parametra odgovara tipu stvarnog argumenta
-		// i da li se broj argumenata poklapa - to preko nekog niza sta vec
-		func.struct = func.getDesignator().obj.getType();
+		Obj funcNode = func.getDesignator().obj;
+		
+		func.struct = funcNode.getType();
+		if (!isFunction(funcNode, func)) {
+			func.struct = Tab.noType;
+			return;
+		}
+		
+		if (func.struct == Tab.noType) {
+			report_error("Funkcija koja nema povratnu vrednost ne moze se koristiti za evaluaciju izraza", func);
+			return;
+		}
+		
+		compareFunctionParams(funcNode, func);
 	}
 	
 	public void visit(FactorConstNum factor) {
@@ -406,6 +458,65 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 		
 		multipleDesignatorTypes.add(unpackedElement.getDesignator().obj.getType());
+	}
+	
+	public void visit(SingleExprCond condition) {
+		if (condition.getExpr().struct != boolType) {
+			report_error("Uslov mora biti logickog tipa", condition);
+		}
+		condition.struct = boolType;
+	}
+	
+	public void visit(MultipleExprCond conditions) {
+		Struct left = conditions.getExpr().struct, right = conditions.getExpr1().struct;
+		
+		if (!left.compatibleWith(right)) {
+			report_error("Nevalidno poredjenje razlicitih tipova", conditions);
+			return;
+		}
+		if (left.getKind() == Struct.Array) {
+			Relop operator = conditions.getRelop();
+			if (!(operator instanceof Equal || operator instanceof NotEqual)) {
+				report_error("Prilikom poredjenja nizova moguce je koristiti iskljucivo " +
+							"operatore != i ==", conditions);
+			}
+		}
+		
+		conditions.struct = boolType;
+	}
+	
+	public void visit(SingleConditionFactor singleFactor) {
+		if (singleFactor.getCondFact().struct != boolType) {
+			report_error("Uslov mora biti logickog tipa", singleFactor);
+			return;
+		}
+		singleFactor.struct = boolType;
+	}
+	
+	public void visit(MultipleConditionFactors factors) {
+		if (factors.getCondFact().struct != boolType 
+			|| 
+			factors.getCondTerm().struct != boolType) {
+			report_error("Prilikom koriscenja AND operatora moguci su samo logicki izrazi", factors);
+		}
+		
+		factors.struct = boolType;
+	}
+	
+	public void visit(SingleConditionTerm term) {
+		if (term.getCondTerm().struct != boolType) {
+			report_error("Uslov mora biti logickog tipa", term);
+			return;
+		}
+		
+		term.struct = boolType;
+	}
+	
+	public void visit(MultipleConditionTerms terms) {
+		if (terms.getCondition().struct != boolType || terms.getCondTerm().struct != boolType) {
+			report_error("Prilikom koriscenja OR operatora moguci su samo logicki izrazi", terms);
+		}
+		terms.struct = boolType;
 	}
 }
 
