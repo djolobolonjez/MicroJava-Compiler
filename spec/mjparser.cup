@@ -81,9 +81,10 @@ nonterminal Relop, Addop, Mulop, Assignop;
 nonterminal ActPars, ActParsList;
 nonterminal Label;
 nonterminal DesignatorStatement, DesignatorStmtList;
-nonterminal ForDesignatorStmtList, ForCondition;
+nonterminal ForDesignatorStmtList, ForCondition, ForStart;
 nonterminal IfCondition;
 nonterminal ArraySquares;
+nonterminal OptionalPrintNum;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
@@ -214,17 +215,22 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(ReadStatement) READ LPAREN Designator RPAREN SEMI
 			|
-			(PrintStatement) PRINT LPAREN Expr:e RPAREN SEMI
+			(PrintStatement) PRINT LPAREN Expr:e OptionalPrintNum RPAREN SEMI
 			|
-			(PrintExpressionStatement) PRINT LPAREN Expr:e COMMA NUMBER RPAREN SEMI
-			|
-			(ForStatement) FOR LPAREN ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Statement
+			(ForStatement) ForStart ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Statement
 			|
 			(BlockStatementList) LBRACE StatementList RBRACE
 			|
 			(StatementError) error SEMI:l
 			{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null); :}
 			;
+			
+ForStart ::= (ForStart) FOR LPAREN;
+			
+OptionalPrintNum ::= (OptionalNumArgument) COMMA NUMBER
+				   |
+				   (NoOptionalNum) /* epsilon*/
+				   ;
 			
 IfCondition ::= (IfWithCondition) IF LPAREN Condition RPAREN
 			  |

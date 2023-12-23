@@ -20,6 +20,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	private Struct currentType = null;
 	private Obj currentMethod = null;
 	private boolean returnFound = true;
+	private int loopCounter = 0;
 	
 	private ArrayList<Struct> multipleDesignatorTypes = new ArrayList<>();
 	
@@ -118,7 +119,17 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		currentType = ident.struct;
 	}
 	
+	private boolean isSymbolAlreadyDeclared(String varName) {
+		Obj obj = Tab.currentScope.findSymbol(varName);
+		return obj != null;
+	}
+	
 	private void variableDetected(String varName, SyntaxNode info) {
+		if (isSymbolAlreadyDeclared(varName)) {
+			report_error("Promenljiva sa imenom " + varName + " je vec deklarisana! Greska", info);
+			return;
+		}
+		
 		Struct varType = currentType;
 		if (variableIsArray) {
 			varType = new Struct(Struct.Array, currentType);
@@ -213,6 +224,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	private Obj methodDetected(String methodName, Struct type, SyntaxNode info) {
+		if (isSymbolAlreadyDeclared(methodName)) {
+			report_error("Funkcija sa imenom " + methodName + " vec postoji! Greska", info);
+			return Tab.noObj;
+		}
+		
 		Obj methodNode = Tab.insert(Obj.Meth, methodName, type);
 		
 		Tab.openScope();
@@ -231,6 +247,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(MethodDecl method) {
+		if (currentMethod == Tab.noObj) {
+			// Desila se greska, metoda je vec prethodno bila deklarisana
+			currentMethod = null;
+			returnFound = false;
+			return;
+		}
+		
 		if (!returnFound && currentMethod.getType() != Tab.noType) {
 			report_error("Semanticka greska na liniji " + method.getLine()
 						+ ": funkcija " + currentMethod.getName() + " nema return naredbu!", null);
@@ -320,8 +343,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(FactorNewArray arrayFactor) {
-		// dodati proveru za expression unutar []
-		arrayFactor.struct = new Struct(Struct.Array, arrayFactor.getType().struct);
+		if (arrayFactor.getExpr().struct != Tab.intType) {
+			report_error("Izraz koji oznacava velicinu niza mora biti celobrojnog tipa", arrayFactor);
+			arrayFactor.struct = Tab.noType;
+		} else { 
+			arrayFactor.struct = new Struct(Struct.Array, arrayFactor.getType().struct);
+		}
 	}
 	
 	public void visit(FactorDesignatorVar var) {
@@ -334,7 +361,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		func.struct = funcNode.getType();
 		if (!isFunction(funcNode, func)) {
 			func.struct = Tab.noType;
-			return;
 		}
 		
 		if (func.struct == Tab.noType) {
@@ -376,7 +402,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(ReturnExpressionStatement returnStmt) {
-		// dodati proveru da li je return unutar neke funkcije (void ne sme vracati neki izraz)
+		if (currentMethod == null) {
+			report_error("Return naredba se mora nalaziti unutar neke funckije!", null);
+			return;
+		}
 		
 		returnFound = true;
 		Struct currentMethodType = currentMethod.getType();
@@ -385,9 +414,20 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_info("Ispravna povratna vrednost funkcije", returnStmt);
 		} else {
 			report_error("Tip izraza u return naredbi ne odgovara povratnom tipu funkcije " + 
-						currentMethod.getName() + ". Izraz je tipa " + returnStmt.getExpr().struct.getKind() + 
-						" a metoda je tipa " + currentMethodType.getKind(), returnStmt);
+						currentMethod.getName(), returnStmt);
 		}
+	}
+	
+	public void visit(ReturnEmptyStatement emptyReturn) {
+		if (currentMethod == null) {
+			report_error("Return naredba se mora nalaziti unutar neke funckije!", null);
+			return;
+		}
+		
+		if (currentMethod.getType() != Tab.noType) {
+			report_error("Prazna return naredba se sme naci samo unutar void metode", null);
+		}
+		
 	}
 	
 	public void visit(DesignatorIncrement inc) {
@@ -517,6 +557,65 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_error("Prilikom koriscenja OR operatora moguci su samo logicki izrazi", terms);
 		}
 		terms.struct = boolType;
+	}
+	
+	public void visit(ReadStatement readStmt) {
+		Obj readObj = readStmt.getDesignator().obj;
+		int objKind = readObj.getKind();
+		
+		if (objKind != Obj.Var && objKind != Obj.Elem) {
+			report_error("Dezignator mora biti promenljiva ili element niza", readStmt);
+		} else {
+			Struct objType = readObj.getType();
+			if (!(objType == Tab.intType || objType == Tab.charType || objType == boolType)) {
+				report_error("Dezignator mora biti char, int ili bool", readStmt);
+				return;
+			}
+			report_info("Read funkcija pozvana", readStmt);
+		}
+	}
+	
+	public void visit(PrintStatement printStmt) {
+		Struct printType = printStmt.getExpr().struct;
+		if (!(printType == Tab.charType || printType == Tab.intType || printType == boolType)) {
+			report_error("Izraz koji se ispisuje mora biti tipa int, char ili bool", printStmt);
+		} else {
+			report_info("Print funkcija pozvana", printStmt);
+		}
+	}
+	
+	public void visit(IfWithCondition condition) {
+		Struct condType = condition.getCondition().struct;
+		
+		if (condType != boolType) {
+			report_error("Tip uslovnog izraza mora biti bool", condition);
+		} else {
+			report_info("If grana", condition);
+		}
+	}
+	
+	public void visit(ForStart forStart) {
+		++loopCounter;
+	}
+	
+	public void visit(ForStatement forStmt) {
+		--loopCounter;
+	}
+	
+	public void visit(BreakStatement breakStmt) {
+		if (loopCounter == 0) {
+			report_error("Break naredba se sme koristiti samo unutar petlje", breakStmt);
+		} else {
+			report_info("Break naredba upotrebljena", breakStmt);
+		}
+	}
+	
+	public void visit(ContinueStatement contStmt) {
+		if (loopCounter == 0) {
+			report_error("Continue naredba se sme koristiti samo unutar petlje", contStmt);
+		} else {
+			report_info("Continue naredba upotrebljena", contStmt);
+		}
 	}
 }
 
