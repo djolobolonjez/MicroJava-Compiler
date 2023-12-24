@@ -1,8 +1,7 @@
-program test3
+program test4
 
-// Nadogradjeni test2 za proveru razlicitih iskaza, a pogotovo if-else kontrolnih struktura
-
-// U ovom testu u aritmetickim izrazima i logickim uslovima korisceni su samo brojevi, karakteri i bool-ovi
+// Testiranje poziva funkcija sa i bez argumenata, iz namespace-a kao i globalnih
+// Koriscenje poziva funkcija, promenljivih, kao i elemenata nizova u uslovima za if else kontrolne strukture
 
 namespace TestNamespace
 
@@ -13,7 +12,10 @@ namespace TestNamespace
 	
 	int f, g, h[];
 	{
-	
+		int namespace_f()
+		{
+			return 1;
+		}
 	}
 
 }
@@ -37,13 +39,13 @@ int z[], w[], k[];
 	char f2_a1, f2_a2;
 	bool f2_a3; 
 	{
-		if ((-10 + 5 * 2) <= 0 || true && 3 > 2 + 1) continue;
+		if (TestNamespace::c <= i || true && z[2] > TestNamespace::h[1]) continue;
 		else {
-			if (2 * 2 >= 3) {
+			if (f3(z, z, 5) < TestNamespace::namespace_f()) {
 				if (true) break;
 			}
 			else {
-				if ('a' < 'b') continue;
+				if (x < y) continue;
 			}
 		}
 	}

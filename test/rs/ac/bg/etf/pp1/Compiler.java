@@ -46,7 +46,6 @@ public class Compiler {
 	        Symbol s = p.parse();  //pocetak parsiranja
 	        
 	        Program prog = null;
-	        
 	        if (!p.errorDetected) 
 	        {
 	        	prog = (Program)(s.value); 

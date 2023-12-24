@@ -1,0 +1,28 @@
+program errors
+
+// Testiranje oporavka od gresaka
+
+int x y; // oporavak do ;
+int z+, w; // oporavak do ,
+{
+	 
+	// oporavak do , 
+	void f1(int a1+,int a2) {
+	
+		x = 5+; // oporavak do ;
+		
+		// oporavak do ) 	
+		if (a1+ < a2) {
+			
+		}	
+		
+	}
+	
+	// oporavak do ) 
+	void f2(int a1, int a2+) 
+	int xx yy;
+	int zz+, ww;
+	{
+	
+	}
+}

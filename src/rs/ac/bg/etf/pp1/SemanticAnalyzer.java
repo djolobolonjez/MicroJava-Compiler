@@ -16,11 +16,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public static final Struct boolType = Tab.insert(Obj.Type, "bool", new Struct(Struct.Bool)).getType();
 	
 	private boolean errorDetected = false;
+	private boolean mainDefined = false;	
+	
 	private boolean variableIsArray = false;
 	private Struct currentType = null;
 	private Obj currentMethod = null;
 	private boolean returnFound = true;
 	private int loopCounter = 0;
+	private Obj currentNamespaceSymbol = null;
+	private String currentNamespace = null;
 	
 	private ArrayList<Struct> multipleDesignatorTypes = new ArrayList<>();
 	
@@ -51,6 +55,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(Program program) {
+		if (!mainDefined) {
+			report_error("Metoda main() mora biti definisana!", program);
+		}
+		
 		Tab.chainLocalSymbols(program.getProgramName().obj);
 		Tab.closeScope();
 	}
@@ -232,7 +240,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Obj methodNode = Tab.insert(Obj.Meth, methodName, type);
 		
 		Tab.openScope();
-		report_info("Deklarisana metoda " + methodName + " tipa " + type.getKind(), info);
+		if (methodName.equals("main") && type != Tab.noType) {
+			report_error("Metoda main() mora biti void tipa", info);
+		}
+		report_info("Deklarisana metoda " + methodName + " tipa " + typeCodeToType(type.getKind()), info);
 		return methodNode;
 	}
 	
@@ -259,6 +270,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 						+ ": funkcija " + currentMethod.getName() + " nema return naredbu!", null);
 		}
 		
+		if (currentMethod.getName().equals("main")) {
+			mainDefined = true;
+		}
+		
 		Tab.chainLocalSymbols(currentMethod);
 		Tab.closeScope();
 		currentMethod = null;
@@ -282,7 +297,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(FormalParamsList formalParams) {
-		currentMethod.setLevel(Tab.currentScope.getnVars());
+		int nVars = Tab.currentScope.getnVars();
+		if (nVars > 0 && currentMethod.getName().equals("main")) {
+			report_error("Metoda main() ne sme imati parametre!", formalParams);
+		}
+		currentMethod.setLevel(nVars);
 	}
 	
 	public void visit(NoFormalParams noParams) {
@@ -291,13 +310,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(ActualParam param) {
 		report_info("Argument funkcije tipa " + 
-				param.getExpr().struct.getKind(), param);
+				typeCodeToType(param.getExpr().struct.getKind()), param);
 		actualParams.add(param.getExpr().struct);
 	}
 	
 	public void visit(ActualParams param) {
 		report_info("Argument funkcije tipa " + 
-				param.getExpr().struct.getKind(), param);
+				typeCodeToType(param.getExpr().struct.getKind()), param);
 		actualParams.add(param.getExpr().struct);
 	}
 	

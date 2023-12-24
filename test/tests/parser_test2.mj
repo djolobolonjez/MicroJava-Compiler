@@ -37,7 +37,7 @@ int z[], w[], k[];
 	
 	}
 	
-	int f3(int f3_arg1[], int f3_arg2[], int f3_arg3) {
+	int f3(int f3_arg1, int f3_arg2[], int f3_arg3+) {
 	
 	}
 	int main() 

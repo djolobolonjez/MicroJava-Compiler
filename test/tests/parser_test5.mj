@@ -1,8 +1,7 @@
-program test3
+program test5
 
-// Nadogradjeni test2 za proveru razlicitih iskaza, a pogotovo if-else kontrolnih struktura
-
-// U ovom testu u aritmetickim izrazima i logickim uslovima korisceni su samo brojevi, karakteri i bool-ovi
+// Raspakivanje niza, dodela vrednosti promenljivoj, inkrementiranje, dekrementiranje, poziv funkcija
+// Koriscenje read i print metoda
 
 namespace TestNamespace
 
@@ -13,13 +12,18 @@ namespace TestNamespace
 	
 	int f, g, h[];
 	{
-	
+		int namespace_f()
+		{	
+			print(f);
+			return 1;
+		}
 	}
 
 }
 const int i = 5, j = 6;
 const char a = 'a';
 const bool validTest = false;
+bool random;
 int x, y;
 int z[], w[], k[];
 {
@@ -36,10 +40,24 @@ int z[], w[], k[];
 	
 	char f2_a1, f2_a2;
 	bool f2_a3; 
-	{
-		if ((-10 + 5 * 2) <= 0 || true && 3 > 2 + 1) continue;
+	{	
+		x = 5;
+		read(x);
+		random = true;
+		TestNamespace::namespace_f();
+		print(x);
+		print(x, 2);
+		print(TestNamespace::namespace_f());
+		for (; i < 5; i++) {
+			x = 5;
+		}
+		x++; 
+		x--;
+		[,TestNamespace::f, TestNamespace::g, *x] = z;
+		[x, *y] = TestNamespace::h;
+		if (TestNamespace::c <= i || true && z[2] > TestNamespace::h[1]) continue;
 		else {
-			if (2 * 2 >= 3) {
+			if (f3(z, z, 5) < TestNamespace::namespace_f()) {
 				if (true) break;
 			}
 			else {

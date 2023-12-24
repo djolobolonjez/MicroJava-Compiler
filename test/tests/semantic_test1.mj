@@ -1,0 +1,50 @@
+program semantic_test1
+
+const int x = 'a';
+const char a = 'a';
+const bool validTest = 5;
+int y, z[];
+int w;
+int y, z[];
+{
+	int foo(int foo_a, int foo_b)
+	int w;
+	{
+		return 0;
+	}
+	
+	void foo() {
+	
+	}
+
+	void f(char f_arg1, int f_arg2) 
+	int fx, fy[];
+	{
+		z = new int[5];
+		z[y()]++;
+		w++;
+		w--;
+		[,z[5],*fy] = z;
+		print(z[5]);
+		read(w);
+		read(fy);
+		if (w > 5) {
+		
+		} else {
+		
+		}
+		for (;w < 5;w++) {
+			continue;
+			break;
+		}
+		break;
+	}
+
+	void main() {
+	
+		f('a', 6);
+		f(5, 6, 7);
+	}
+}
+// PRILIKOM KORISCENJA PROMENLJIVA DODATI PROVERU DA LI SU PRETHODNO DEKLARISANE
+
