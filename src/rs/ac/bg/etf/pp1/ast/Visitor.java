@@ -1,6 +1,6 @@
 // generated with ast extension for cup
 // version 0.8
-// 24/11/2023 1:33:29
+// 24/11/2023 13:16:44
 
 
 package rs.ac.bg.etf.pp1.ast;
@@ -147,6 +147,7 @@ public interface Visitor {
     public void visit(NoDeclList NoDeclList);
     public void visit(DeclListForVar DeclListForVar);
     public void visit(DeclListForConst DeclListForConst);
+    public void visit(NamespaceStart NamespaceStart);
     public void visit(Namespace Namespace);
     public void visit(NoNamespaceDecl NoNamespaceDecl);
     public void visit(MultipleNamespaceDecl MultipleNamespaceDecl);

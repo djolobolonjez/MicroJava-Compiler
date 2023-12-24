@@ -1,11 +1,30 @@
 program semantic_test1
 
-const int x = 'a';
+namespace Test {
+
+	const int x = 3;
+	const char a = 'a';
+	const bool validTest = true;
+	const int x = 5;
+	
+	int y, z[];
+	int w, foo_a;
+	
+	{
+		int foo(int foo_a, int foo_b)
+		int w;
+		{
+			return 0;
+		}
+	}
+}
+
+const int x = 3;
 const char a = 'a';
-const bool validTest = 5;
+const bool validTest = true;
+const int x = 5;
 int y, z[];
 int w;
-int y, z[];
 {
 	int foo(int foo_a, int foo_b)
 	int w;

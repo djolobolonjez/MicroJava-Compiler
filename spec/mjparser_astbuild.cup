@@ -71,6 +71,7 @@ terminal Boolean BOOLEAN;
 nonterminal NamespaceDeclList NamespaceDeclList;
 nonterminal ConstVarDeclList ConstVarDeclList;
 nonterminal Namespace Namespace;
+nonterminal NamespaceStart NamespaceStart;
 nonterminal ConstDecl ConstDecl;
 nonterminal VarDecl VarDecl;
 nonterminal MethodVarDeclList MethodVarDeclList;
@@ -119,7 +120,9 @@ NamespaceDeclList ::= (MultipleNamespaceDecl) NamespaceDeclList:N1 Namespace:N2 
 		           	(NoNamespaceDecl) {: RESULT=new NoNamespaceDecl(); :} /* epsilon */
 		           	;
 
-Namespace ::= (Namespace) NAMESPACE IDENT:I1 LBRACE ConstVarDeclList:C2 LBRACE MethodDeclList:M3 RBRACE RBRACE {: RESULT=new Namespace(I1, C2, M3); RESULT.setLine(I1left); :};
+Namespace ::= (Namespace) NamespaceStart:N1 LBRACE ConstVarDeclList:C2 LBRACE MethodDeclList:M3 RBRACE RBRACE {: RESULT=new Namespace(N1, C2, M3); RESULT.setLine(N1left); :};
+
+NamespaceStart ::= (NamespaceStart) NAMESPACE IDENT:namespaceName {: RESULT=new NamespaceStart(namespaceName); RESULT.setLine(namespaceNameleft); :};
 
 ConstVarDeclList ::= (DeclListForConst) ConstVarDeclList:C1 ConstDecl:C2 {: RESULT=new DeclListForConst(C1, C2); RESULT.setLine(C1left); :}
 				   |

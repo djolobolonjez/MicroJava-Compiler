@@ -2,6 +2,7 @@ package rs.ac.bg.etf.pp1;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import org.apache.log4j.Logger;
@@ -23,8 +24,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	private Obj currentMethod = null;
 	private boolean returnFound = true;
 	private int loopCounter = 0;
-	private Obj currentNamespaceSymbol = null;
 	private String currentNamespace = null;
+	
+	private HashSet<String> namespaces = new HashSet<>();
 	
 	private ArrayList<Struct> multipleDesignatorTypes = new ArrayList<>();
 	
@@ -88,11 +90,36 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		return type;
 	}
 	
+	public void addConstSymbol(String constName, SyntaxNode info, Struct constType, int value) {
+		String symName = constName;
+		
+		if (currentNamespace != null) {
+			symName = currentNamespace + "::" + constName;
+			if (isNamespaceSymbolDeclared(symName)) {
+				report_error("Konstanta " + constName + " je vec deklarisana unutar "
+							+ currentNamespace + " prostora imena", info);
+				return;
+			}
+		} else {
+			if (isSymbolAlreadyDeclared(constName)) {
+				report_error("Konstanta " + constName + " je vec deklarisana", info);
+				return;
+			}
+		}
+		
+		report_info("Deklarisana konstanta " + symName, info);
+		
+		Obj obj = Tab.insert(Obj.Con, symName, constType);
+		obj.setAdr(value);
+	}
+	
 	public void visit(ConstInt cnst) {
 		if (!currentType.equals(Tab.intType)) {
 			report_error("Konstanti tipa " + typeCodeToType(currentType.getKind()) +
 						" dodeljena je int vrednost", cnst);
 		}
+		
+		addConstSymbol(cnst.getConstName(), cnst, Tab.intType, cnst.getValue());
 	}
 	
 	public void visit(ConstChar cnst) {
@@ -100,6 +127,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_error("Konstanti tipa " + typeCodeToType(currentType.getKind()) +
 						" dodeljena je char vrednost", cnst);
 		}
+		
+		addConstSymbol(cnst.getConstName(), cnst, Tab.charType, cnst.getValue());
 	}
 	
 	public void visit(ConstBool cnst) {
@@ -107,6 +136,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_error("Konstanti tipa " + typeCodeToType(currentType.getKind()) +
 						" dodeljena je bool vrednost", cnst);
 		}
+		int value = (cnst.getValue() == true ? 1 : 0);
+		addConstSymbol(cnst.getConstName(), cnst, boolType, value);
 	}
 	
 	public void visit(Identifier ident) {
@@ -127,25 +158,46 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		currentType = ident.struct;
 	}
 	
-	private boolean isSymbolAlreadyDeclared(String varName) {
-		Obj obj = Tab.currentScope.findSymbol(varName);
+	private boolean isSymbolAlreadyDeclared(String symName) {
+		Obj obj = Tab.currentScope.findSymbol(symName);
 		return obj != null;
 	}
 	
-	private void variableDetected(String varName, SyntaxNode info) {
-		if (isSymbolAlreadyDeclared(varName)) {
-			report_error("Promenljiva sa imenom " + varName + " je vec deklarisana! Greska", info);
-			return;
+	private boolean isNamespaceSymbolDeclared(String symName) {
+		Obj obj = (currentMethod != null ? Tab.currentScope().findSymbol(symName) : Tab.find(symName));
+		
+		if (currentMethod != null) {
+			return obj != null;
 		}
+		return obj != Tab.noObj;
+	}
+	
+	private void variableDetected(String varName, SyntaxNode info) {
+		String symName = varName;
+		
+		if (currentNamespace != null) {
+			symName = currentNamespace + "::" + varName;
+			if (isNamespaceSymbolDeclared(symName)) {
+				report_error("Promenljiva " + varName + " je vec deklarisana unutar " 
+							+ currentNamespace + " prostora imena", info);
+				return;
+			}
+		} else {
+			if (isSymbolAlreadyDeclared(symName)) {
+				report_error("Promenljiva sa imenom " + varName + " je vec deklarisana! Greska", info);
+				return;
+			}
+		}
+		
 		
 		Struct varType = currentType;
 		if (variableIsArray) {
 			varType = new Struct(Struct.Array, currentType);
 		}
-		report_info("Deklarisana promenljiva " + varName + 
+		report_info("Deklarisana promenljiva " + symName + 
 				(variableIsArray ? "[]": ""), info);
 		
-		Tab.insert(Obj.Var, varName, varType);
+		Tab.insert(Obj.Var, symName, varType);
 	}
 	
 	public void visit(MultipleVariablesDecl varDecl) {
@@ -232,18 +284,30 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	private Obj methodDetected(String methodName, Struct type, SyntaxNode info) {
-		if (isSymbolAlreadyDeclared(methodName)) {
-			report_error("Funkcija sa imenom " + methodName + " vec postoji! Greska", info);
-			return Tab.noObj;
+		String symName = methodName;
+		
+		if (currentNamespace != null) {
+			symName = currentNamespace + "::" + methodName;
+			if (isNamespaceSymbolDeclared(symName)) {
+				report_error("Metoda " + methodName + " je vec deklarisana unutar "
+							+ currentNamespace + " prostora imena", info);
+				return Tab.noObj;
+			}
+		} else {
+			if (isSymbolAlreadyDeclared(methodName)) {
+				report_error("Funkcija sa imenom " + methodName + " vec postoji! Greska", info);
+				return Tab.noObj;
+			}
 		}
 		
-		Obj methodNode = Tab.insert(Obj.Meth, methodName, type);
+		
+		Obj methodNode = Tab.insert(Obj.Meth, symName, type);
 		
 		Tab.openScope();
 		if (methodName.equals("main") && type != Tab.noType) {
 			report_error("Metoda main() mora biti void tipa", info);
 		}
-		report_info("Deklarisana metoda " + methodName + " tipa " + typeCodeToType(type.getKind()), info);
+		report_info("Deklarisana metoda " + symName + " tipa " + typeCodeToType(type.getKind()), info);
 		return methodNode;
 	}
 	
@@ -339,6 +403,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			multipleTerms.struct = Tab.intType;
 		} else {
 			report_error("Nekompatibilni tipovi u izrazu za sabiranje!", multipleTerms);
+			multipleTerms.struct = Tab.noType;
 		}
 	}
 	
@@ -521,6 +586,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(SingleExprCond condition) {
 		if (condition.getExpr().struct != boolType) {
+			condition.struct = Tab.noType;
 			report_error("Uslov mora biti logickog tipa", condition);
 		}
 		condition.struct = boolType;
@@ -530,12 +596,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Struct left = conditions.getExpr().struct, right = conditions.getExpr1().struct;
 		
 		if (!left.compatibleWith(right)) {
+			conditions.struct = Tab.noType;
 			report_error("Nevalidno poredjenje razlicitih tipova", conditions);
 			return;
 		}
 		if (left.getKind() == Struct.Array) {
 			Relop operator = conditions.getRelop();
 			if (!(operator instanceof Equal || operator instanceof NotEqual)) {
+				conditions.struct = Tab.noType;
 				report_error("Prilikom poredjenja nizova moguce je koristiti iskljucivo " +
 							"operatore != i ==", conditions);
 			}
@@ -546,6 +614,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(SingleConditionFactor singleFactor) {
 		if (singleFactor.getCondFact().struct != boolType) {
+			singleFactor.struct = Tab.noType;
 			report_error("Uslov mora biti logickog tipa", singleFactor);
 			return;
 		}
@@ -556,6 +625,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (factors.getCondFact().struct != boolType 
 			|| 
 			factors.getCondTerm().struct != boolType) {
+			factors.struct = Tab.noType;
 			report_error("Prilikom koriscenja AND operatora moguci su samo logicki izrazi", factors);
 		}
 		
@@ -564,6 +634,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(SingleConditionTerm term) {
 		if (term.getCondTerm().struct != boolType) {
+			term.struct = Tab.noType;
 			report_error("Uslov mora biti logickog tipa", term);
 			return;
 		}
@@ -635,6 +706,17 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		} else {
 			report_info("Continue naredba upotrebljena", contStmt);
 		}
+	}
+	
+	public void visit(NamespaceStart namespaceStart) {
+		currentNamespace = namespaceStart.getNamespaceName();
+		if (!namespaces.contains(currentNamespace)) {
+			namespaces.add(currentNamespace);
+		}
+	}
+	
+	public void visit(Namespace namespace) {
+		currentNamespace = null;
 	}
 }
 

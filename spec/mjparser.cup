@@ -69,7 +69,7 @@ terminal Boolean BOOLEAN;
 /* Non-terminals */
 
 nonterminal NamespaceDeclList, ConstVarDeclList;
-nonterminal Namespace;
+nonterminal Namespace, NamespaceStart;
 nonterminal ConstDecl, VarDecl;
 nonterminal MethodVarDeclList;
 nonterminal ConstAssign;
@@ -104,7 +104,9 @@ NamespaceDeclList ::= (MultipleNamespaceDecl) NamespaceDeclList Namespace
 		           	(NoNamespaceDecl) /* epsilon */
 		           	;
 
-Namespace ::= (Namespace) NAMESPACE IDENT LBRACE ConstVarDeclList LBRACE MethodDeclList RBRACE RBRACE;
+Namespace ::= (Namespace) NamespaceStart LBRACE ConstVarDeclList LBRACE MethodDeclList RBRACE RBRACE;
+
+NamespaceStart ::= (NamespaceStart) NAMESPACE IDENT:namespaceName;
 
 ConstVarDeclList ::= (DeclListForConst) ConstVarDeclList ConstDecl
 				   |
