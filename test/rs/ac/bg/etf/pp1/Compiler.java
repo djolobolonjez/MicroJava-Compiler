@@ -57,8 +57,8 @@ public class Compiler {
 				
 				Tab.dump();
 				
-				log.info(prog.toString(""));
-				log.info("===================================");
+				//log.info(prog.toString(""));
+				//log.info("===================================");
 	        }
 			
 			

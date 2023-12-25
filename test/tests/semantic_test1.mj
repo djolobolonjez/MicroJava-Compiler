@@ -29,6 +29,8 @@ int w;
 	int foo(int foo_a, int foo_b)
 	int w;
 	{
+		Test::y = 5;
+		Test::j = 3;
 		return 0;
 	}
 	
@@ -39,6 +41,7 @@ int w;
 	void f(char f_arg1, int f_arg2) 
 	int fx, fy[];
 	{
+		c = 2 + 3;
 		z = new int[5];
 		z[y()]++;
 		w++;

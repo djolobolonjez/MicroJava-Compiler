@@ -62,20 +62,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 		
 		Tab.chainLocalSymbols(program.getProgramName().obj);
+		int nVars = Tab.currentScope().getnVars();
+		report_info("Broj varijabli " + nVars, program);
 		Tab.closeScope();
+		
 	}
-	
-//	public void visit(ConstDecl constDecl) {
-//		String constName = constDecl.getConstName();
-//		if (Tab.find(constName) != Tab.noObj) {
-//			report_error("Konstanta " + constName + " je vec deklarisana!", constDecl);
-//			return;
-//		}
-//		
-//		report_info("Deklarisana konstanta "+ constDecl.getConstName(), constDecl);
-//		
-//		Tab.insert(Obj.Con, constDecl.getConstName(), constDecl.getType().struct);
-//	}
 	
 	private String typeCodeToType(int kind) {
 		String type = null;
@@ -219,9 +210,41 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(DesignatorVariable designator) {
-		designator.obj = Tab.find(designator.getIdentName());
+		String name = designator.getIdentName();
+		if (currentNamespace != null) {
+			name = currentNamespace + "::" + designator.getIdentName();
+		}
+		designator.obj = Tab.find(name);
 		
-		//proveriti da li je promenljiva deklarisana
+		if (designator.obj == Tab.noObj) {
+			report_error("Promenljiva mora biti deklarisana pre upotrebe", designator);
+		}
+	}
+	
+	public void visit(DesignatorNamespace designator) {
+		String outerName = designator.getOuterTypeName();
+		String innerName = designator.getInnerName();
+		
+		if (!namespaces.contains(outerName)) {
+			report_error("Ne postoji prostor imena sa nazivom " + outerName, designator);
+			designator.obj = Tab.noObj;
+			return;
+		}
+		
+		Obj varObj = Tab.find(outerName + "::" + innerName);
+		designator.obj = varObj;
+		
+		if (varObj == Tab.noObj) {
+			report_error("Ne postoji deklarisana promenljiva, metoda ili konstanta u prostoru imena " +
+					outerName+ " sa imenom " + innerName, designator);
+			return;
+		}
+		
+		int varKind = varObj.getKind();
+		if (!(varKind == Obj.Con || varKind == Obj.Meth || varKind == Obj.Var)) {
+			report_error("Dezignator mora biti konstanta, promenljiva ili metoda", designator);
+			return;
+		}
 	}
 	
 	public void visit(DesignatorListArray array) {
@@ -351,7 +374,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (variableIsArray) {
 			formalParamType = new Struct(Struct.Array, currentType);
 		}
-		Tab.insert(Obj.Var, formalParam.getParamName(), formalParamType);
+		if (currentNamespace != null) {
+			paramName = currentNamespace + "::" + formalParam.getParamName();
+		}
+		Tab.insert(Obj.Var, paramName, formalParamType);
 		
 		report_info("Pronadjen parametar " + paramName + 
 					(variableIsArray ? "[]" : "") + " funkcije " 
