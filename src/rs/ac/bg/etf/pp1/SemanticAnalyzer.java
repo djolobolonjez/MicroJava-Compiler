@@ -25,6 +25,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	private boolean returnFound = true;
 	private int loopCounter = 0;
 	private String currentNamespace = null;
+	private int nVars;
 	
 	private HashSet<String> namespaces = new HashSet<>();
 	
@@ -35,7 +36,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	Logger log = Logger.getLogger(getClass());
 
 	public void report_error(String message, SyntaxNode info) {
-		errorDetected = true;
+		setErrorDetected(true);
 		StringBuilder msg = new StringBuilder(message);
 		int line = (info == null) ? 0: info.getLine();
 		if (line != 0)
@@ -62,12 +63,20 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 		
 		Tab.chainLocalSymbols(program.getProgramName().obj);
-		int nVars = Tab.currentScope().getnVars();
+		this.nVars = Tab.currentScope().getnVars();
 		report_info("Broj varijabli " + nVars, program);
 		Tab.closeScope();
 		
 	}
 	
+	public int getnVars() {
+		return nVars;
+	}
+
+	public void setnVars(int nVars) {
+		this.nVars = nVars;
+	}
+
 	private String typeCodeToType(int kind) {
 		String type = null;
 		
@@ -188,7 +197,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		report_info("Deklarisana promenljiva " + symName + 
 				(variableIsArray ? "[]": ""), info);
 		
-		Tab.insert(Obj.Var, symName, varType);
+		Obj obj = Tab.insert(Obj.Var, symName, varType);
+		report_info("Nivo je " + obj.getLevel(), info);
 	}
 	
 	public void visit(MultipleVariablesDecl varDecl) {
@@ -691,7 +701,16 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 	}
 	
-	public void visit(PrintStatement printStmt) {
+	public void visit(PrintStatementNoWidth printStmt) {
+		Struct printType = printStmt.getExpr().struct;
+		if (!(printType == Tab.charType || printType == Tab.intType || printType == boolType)) {
+			report_error("Izraz koji se ispisuje mora biti tipa int, char ili bool", printStmt);
+		} else {
+			report_info("Print funkcija pozvana", printStmt);
+		}
+	}
+	
+	public void visit(PrintStatementWidth printStmt) {
 		Struct printType = printStmt.getExpr().struct;
 		if (!(printType == Tab.charType || printType == Tab.intType || printType == boolType)) {
 			report_error("Izraz koji se ispisuje mora biti tipa int, char ili bool", printStmt);
@@ -743,6 +762,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(Namespace namespace) {
 		currentNamespace = null;
+	}
+
+	public boolean isErrorDetected() {
+		return errorDetected;
+	}
+
+	public void setErrorDetected(boolean errorDetected) {
+		this.errorDetected = errorDetected;
 	}
 }
 

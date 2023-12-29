@@ -99,8 +99,9 @@ nonterminal ForDesignatorStmtList ForDesignatorStmtList;
 nonterminal ForCondition ForCondition;
 nonterminal ForStart ForStart;
 nonterminal IfCondition IfCondition;
+nonterminal IfStart IfStart;
+nonterminal ElseStart ElseStart;
 nonterminal ArraySquares ArraySquares;
-nonterminal OptionalPrintNum OptionalPrintNum;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
@@ -221,7 +222,7 @@ Statement ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new Designa
 			|
 			(IfStatement) IfCondition:I1 Statement:S2 {: RESULT=new IfStatement(I1, S2); RESULT.setLine(I1left); :}
 			|
-			(IfElseStatement) IfCondition:I1 Statement:S2 ELSE Statement:S3 {: RESULT=new IfElseStatement(I1, S2, S3); RESULT.setLine(I1left); :}
+			(IfElseStatement) IfCondition:I1 Statement:S2 ElseStart:E3 Statement:S4 {: RESULT=new IfElseStatement(I1, S2, E3, S4); RESULT.setLine(I1left); :}
 			|
 			(BreakStatement) BREAK SEMI {: RESULT=new BreakStatement(); :}
 			|
@@ -233,7 +234,9 @@ Statement ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new Designa
 			|
 			(ReadStatement) READ LPAREN Designator:D1 RPAREN SEMI {: RESULT=new ReadStatement(D1); RESULT.setLine(D1left); :}
 			|
-			(PrintStatement) PRINT LPAREN Expr:e OptionalPrintNum:O1 RPAREN SEMI {: RESULT=new PrintStatement(e, O1); RESULT.setLine(eleft); :}
+			(PrintStatementNoWidth) PRINT LPAREN Expr:e RPAREN SEMI {: RESULT=new PrintStatementNoWidth(e); RESULT.setLine(eleft); :}
+			|
+			(PrintStatementWidth) PRINT LPAREN Expr:e COMMA NUMBER:width RPAREN SEMI {: RESULT=new PrintStatementWidth(e, width); RESULT.setLine(eleft); :}
 			|
 			(ForStatement) ForStart:F1 ForDesignatorStmtList:F2 SEMI ForCondition:F3 SEMI ForDesignatorStmtList:F4 RPAREN Statement:S5 {: RESULT=new ForStatement(F1, F2, F3, F4, S5); RESULT.setLine(F1left); :}
 			|
@@ -245,17 +248,15 @@ Statement ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new Designa
 			
 ForStart ::= (ForStart) FOR LPAREN {: RESULT=new ForStart(); :};
 			
-OptionalPrintNum ::= (OptionalNumArgument) COMMA NUMBER:N1 {: RESULT=new OptionalNumArgument(N1); RESULT.setLine(N1left); :}
-				   |
-				   (NoOptionalNum) {: RESULT=new NoOptionalNum(); :} /* epsilon*/
-				   ;
-			
-IfCondition ::= (IfWithCondition) IF LPAREN Condition:C1 RPAREN {: RESULT=new IfWithCondition(C1); RESULT.setLine(C1left); :}
+IfCondition ::= (IfWithCondition) IfStart:I1 LPAREN Condition:C2 RPAREN {: RESULT=new IfWithCondition(I1, C2); RESULT.setLine(I1left); :}
 			  |
-			  (ErrorInIfCondition) IF LPAREN error RPAREN:l
-			  {: parser.report_error("Izvrsen oporavak do ) u liniji " + lleft, null); :} {: RESULT=new ErrorInIfCondition(); :}
+			  (ErrorInIfCondition) IfStart:I1 LPAREN error RPAREN:l
+			  {: parser.report_error("Izvrsen oporavak do ) u liniji " + lleft, null); :} {: RESULT=new ErrorInIfCondition(I1); RESULT.setLine(I1left); :}
 			  ;
 			 
+IfStart ::= (IfStart) IF {: RESULT=new IfStart(); :};
+
+ElseStart ::= (ElseStart) ELSE {: RESULT=new ElseStart(); :};
 			
 ForDesignatorStmtList ::= (ForMultipleStatements) ForDesignatorStmtList:F1 COMMA DesignatorStatement:D2 {: RESULT=new ForMultipleStatements(F1, D2); RESULT.setLine(F1left); :}
 						 |
@@ -281,7 +282,7 @@ CondTerm ::= (MultipleConditionFactors) CondTerm:C1 AND CondFact:C2 {: RESULT=ne
 		   
 CondFact ::= (SingleExprCond) Expr:exp {: RESULT=new SingleExprCond(exp); RESULT.setLine(expleft); :}
 		   |
-		   (MultipleExprCond)Expr:exp1 Relop:R1 Expr:exp2 {: RESULT=new MultipleExprCond(exp1, R1, exp2); RESULT.setLine(exp1left); :}
+		   (MultipleExprCond) Expr:exp1 Relop:R1 Expr:exp2 {: RESULT=new MultipleExprCond(exp1, R1, exp2); RESULT.setLine(exp1left); :}
 		   ;
 		   
 Expr ::= (ExprMultipleTerm) Expr:texp Addop:A1 Term:t {: RESULT=new ExprMultipleTerm(texp, A1, t); RESULT.setLine(texpleft); :}

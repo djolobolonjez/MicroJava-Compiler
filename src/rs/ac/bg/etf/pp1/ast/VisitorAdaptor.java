@@ -1,6 +1,6 @@
 // generated with ast extension for cup
 // version 0.8
-// 25/11/2023 14:25:57
+// 29/11/2023 20:45:4
 
 
 package rs.ac.bg.etf.pp1.ast;
@@ -26,7 +26,6 @@ public abstract class VisitorAdaptor implements Visitor {
     public void visit(Condition Condition) { }
     public void visit(DesignatorStmtList DesignatorStmtList) { }
     public void visit(ConstDeclList ConstDeclList) { }
-    public void visit(OptionalPrintNum OptionalPrintNum) { }
     public void visit(MultipleVarDecl MultipleVarDecl) { }
     public void visit(ActParsList ActParsList) { }
     public void visit(IfCondition IfCondition) { }
@@ -94,15 +93,16 @@ public abstract class VisitorAdaptor implements Visitor {
     public void visit(ForNoStatements ForNoStatements) { visit(); }
     public void visit(ForSingleStatement ForSingleStatement) { visit(); }
     public void visit(ForMultipleStatements ForMultipleStatements) { visit(); }
+    public void visit(ElseStart ElseStart) { visit(); }
+    public void visit(IfStart IfStart) { visit(); }
     public void visit(ErrorInIfCondition ErrorInIfCondition) { visit(); }
     public void visit(IfWithCondition IfWithCondition) { visit(); }
-    public void visit(NoOptionalNum NoOptionalNum) { visit(); }
-    public void visit(OptionalNumArgument OptionalNumArgument) { visit(); }
     public void visit(ForStart ForStart) { visit(); }
     public void visit(StatementError StatementError) { visit(); }
     public void visit(BlockStatementList BlockStatementList) { visit(); }
     public void visit(ForStatement ForStatement) { visit(); }
-    public void visit(PrintStatement PrintStatement) { visit(); }
+    public void visit(PrintStatementWidth PrintStatementWidth) { visit(); }
+    public void visit(PrintStatementNoWidth PrintStatementNoWidth) { visit(); }
     public void visit(ReadStatement ReadStatement) { visit(); }
     public void visit(ReturnEmptyStatement ReturnEmptyStatement) { visit(); }
     public void visit(ReturnExpressionStatement ReturnExpressionStatement) { visit(); }

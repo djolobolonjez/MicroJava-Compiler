@@ -1,0 +1,66 @@
+program code1
+
+namespace Test {
+
+	int x, y, z;
+	const int num = 5;
+	{
+		int add()
+		int local;
+		 {
+			x = 3;
+			y = 4;
+			print(x + y);
+			return x + y;
+		}
+		
+		int sub() {
+			x = 4;
+			y = 3;
+			return 1;
+		}
+	}
+}
+
+int x;
+{
+	int foo() 
+	int k;
+	{
+		k = 5;
+		print(k);
+		return k;
+	}
+	
+	void main() 
+	int y, z, w[], ret;
+	char a;
+	{	
+		y = 5;
+		//read(a);
+		//read(x);
+		x = 3;
+		x++;
+		//print(x);
+		x--;
+		
+		//print(a);
+		w = new int[5];
+		w[0] = 3;
+
+		ret = Test::sub();		
+		
+		if (false || ret > 2 && x < 3) {
+			x++;
+		} else {
+			if (false || ret != 1 && x == 4) {
+				x--;
+			}
+		}
+		
+		z = (x + 3) * y + w[0] + ret;
+		
+		print(z);
+	}
+
+}

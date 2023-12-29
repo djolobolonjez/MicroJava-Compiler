@@ -82,9 +82,8 @@ nonterminal ActPars, ActParsList;
 nonterminal Label;
 nonterminal DesignatorStatement, DesignatorStmtList;
 nonterminal ForDesignatorStmtList, ForCondition, ForStart;
-nonterminal IfCondition;
+nonterminal IfCondition, IfStart, ElseStart;
 nonterminal ArraySquares;
-nonterminal OptionalPrintNum;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
@@ -205,7 +204,7 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(IfStatement) IfCondition Statement
 			|
-			(IfElseStatement) IfCondition Statement ELSE Statement
+			(IfElseStatement) IfCondition Statement ElseStart Statement
 			|
 			(BreakStatement) BREAK SEMI
 			|
@@ -217,7 +216,9 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(ReadStatement) READ LPAREN Designator RPAREN SEMI
 			|
-			(PrintStatement) PRINT LPAREN Expr:e OptionalPrintNum RPAREN SEMI
+			(PrintStatementNoWidth) PRINT LPAREN Expr:e RPAREN SEMI
+			|
+			(PrintStatementWidth) PRINT LPAREN Expr:e COMMA NUMBER:width RPAREN SEMI
 			|
 			(ForStatement) ForStart ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Statement
 			|
@@ -229,17 +230,15 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			
 ForStart ::= (ForStart) FOR LPAREN;
 			
-OptionalPrintNum ::= (OptionalNumArgument) COMMA NUMBER
-				   |
-				   (NoOptionalNum) /* epsilon*/
-				   ;
-			
-IfCondition ::= (IfWithCondition) IF LPAREN Condition RPAREN
+IfCondition ::= (IfWithCondition) IfStart LPAREN Condition RPAREN
 			  |
-			  (ErrorInIfCondition) IF LPAREN error RPAREN:l
+			  (ErrorInIfCondition) IfStart LPAREN error RPAREN:l
 			  {: parser.report_error("Izvrsen oporavak do ) u liniji " + lleft, null); :}
 			  ;
 			 
+IfStart ::= (IfStart) IF;
+
+ElseStart ::= (ElseStart) ELSE;
 			
 ForDesignatorStmtList ::= (ForMultipleStatements) ForDesignatorStmtList COMMA DesignatorStatement
 						 |
@@ -265,7 +264,7 @@ CondTerm ::= (MultipleConditionFactors) CondTerm AND CondFact
 		   
 CondFact ::= (SingleExprCond) Expr:exp
 		   |
-		   (MultipleExprCond)Expr:exp1 Relop Expr:exp2
+		   (MultipleExprCond) Expr:exp1 Relop Expr:exp2
 		   ;
 		   
 Expr ::= (ExprMultipleTerm) Expr:texp Addop Term:t
