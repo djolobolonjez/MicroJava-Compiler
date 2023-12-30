@@ -21,6 +21,9 @@ public class CodeGenerator extends VisitorAdaptor {
 	private Stack<List<Integer>> loopBodyPatch = new Stack<>();
 	private Stack<List<Integer>> afterLoopConditionPatch = new Stack<>();
 	
+	private ArrayList<Obj> assignmentDesignators = new ArrayList<>();
+	private ArrayList<Obj> assignmentArrayDesignators = new ArrayList<>();
+	
 	private int condTermCount = 0;
 	private boolean loopBegin = false;
 	
@@ -109,10 +112,17 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	public void visit(DesignatorVariable var) {
 		SyntaxNode parent = var.getParent();
-		if (!(parent instanceof DesignatorAssignment || parent instanceof FunctionCall)) {
+		if (!(parent instanceof DesignatorAssignment || parent instanceof FunctionCall || 
+			  parent instanceof DesignatorListElement || parent instanceof DesignatorUnpacking
+			)) {
 			Code.load(var.obj);
 		}
 		
+		if (parent instanceof DesignatorListElement) {
+			assignmentDesignators.add(var.obj);
+		} else if (parent instanceof DesignatorUnpacking) {
+			assignmentArrayDesignators.add(var.obj);
+		}
 	}
 	
 	public void visit(DesignatorNamespace var) {
@@ -143,8 +153,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		int offset = funcObj.getAdr() - Code.pc;
 		Code.put(Code.call);
 		Code.put2(offset);	
-		
-		System.out.println("TUU");
 	}
 	
 	public void visit(FactorDesignatorVar varFactor) {
@@ -413,6 +421,29 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	public void visit(DesignatorUnpacking unpack) {
-		// TODO
+		
+		int index = 0;
+		Obj arrayNode = assignmentArrayDesignators.get(1);
+		// dodati proveru za duzinu niza
+		Code.loadConst(assignmentDesignators.size());
+		Code.load(arrayNode);
+		Code.put(Code.arraylength);
+		Code.putFalseJump(Code.gt, Code.pc + 5);
+		Code.put(Code.trap);
+		Code.put(Code.const_1);
+		
+		for (Obj obj : assignmentDesignators) {
+			Code.load(arrayNode);
+			Code.loadConst(index++);
+			if (arrayNode.getType() == Tab.charType) {
+				Code.put(Code.baload);
+			} else {
+				Code.put(Code.aload);
+			}
+			Code.store(obj);
+		}
+		
+		assignmentDesignators.clear();
+		assignmentArrayDesignators.clear();
 	}
 }

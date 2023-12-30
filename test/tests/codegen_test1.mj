@@ -31,7 +31,7 @@ int x;
 	}
 	
 	void main() 
-	int y, z, w[], ret;
+	int y, z, w[], ret, arr[];
 	char a;
 	{	
 		y = 5;
@@ -44,7 +44,9 @@ int x;
 		
 		//print(a);
 		w = new int[5];
+		arr = new int[3];
 		w[0] = 3;
+		w[1] = 7;
 
 		ret = Test::sub(4, 3);		
 		
@@ -66,7 +68,7 @@ int x;
 			}
 			print(x);
 		}
-		
+		[,x,y,*arr] = w;
 		z = (x + 3) * y + w[0] + ret;
 		
 		print(z);
