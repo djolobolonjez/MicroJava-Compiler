@@ -387,7 +387,6 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	public void visit(ForStatement forStmt) {
-		
 		int offset = afterLoopConditionPatch.peek().get(0) - Code.pc;
 		Code.put(Code.jmp);
 		Code.put2(offset);
@@ -402,8 +401,18 @@ public class CodeGenerator extends VisitorAdaptor {
 		afterLoopConditionPatch.pop();
 	}
 	
+	public void visit(ContinueStatement continueStmt) {
+		int offset = afterLoopConditionPatch.peek().get(0) - Code.pc;
+		Code.put(Code.jmp);
+		Code.put2(offset);
+	}
+	
+	public void visit(BreakStatement breakStmt) {
+		Code.putJump(0);
+		loopEndConditionPatch.peek().add(Code.pc - 2);
+	}
+	
 	public void visit(DesignatorUnpacking unpack) {
 		// TODO
-		// dodati i proveru za petlju
 	}
 }

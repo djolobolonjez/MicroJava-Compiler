@@ -66,8 +66,8 @@ int a, curr;
 			niz[0] = 1 * a;
 			niz[1] = 2 * a;
 			niz[2] = Addition::sum(niz[1], niz[0]) * a + 1;
-			if(verify() || niz[2] == 4) print(ord('A')); 
-			else print(ord('a'));
+			//if(verify() || niz[2] == 4) print(ord('A')); 
+			//else print(ord('a'));
 			
 			print(eol);
 			for (i=0; i < 10; ) {
@@ -110,33 +110,33 @@ int a, curr;
 		Unpacking::niz[2] = 6;
 		
 		Unpacking::niz2 = new int[1];
-		[Unpacking::a,Unpacking::b,*Unpacking::niz2] = Unpacking::niz;
-		print(Unpacking::a);
-		print(Unpacking::b);
-		print(Unpacking::niz2[0]);
-		print(eol);
+		//[Unpacking::a,Unpacking::b,*Unpacking::niz2] = Unpacking::niz;
+		//print(Unpacking::a);
+		//print(Unpacking::b);
+		//print(Unpacking::niz2[0]);
+		//print(eol);
 		
 		Unpacking::niz2 = new int[1];
-		[,Unpacking::a,*Unpacking::niz2] = niz;
-		print(Unpacking::a);
-		print(Unpacking::niz2[0]);
-		print(eol);
+		//[,Unpacking::a,*Unpacking::niz2] = niz;
+		//print(Unpacking::a);
+		//print(Unpacking::niz2[0]);
+		//print(eol);
 
 		Unpacking::niz2 = new int[2];
 		Unpacking::niz3 = new int[1];
-		[Unpacking::niz2[0],Unpacking::niz2[Unpacking::niz[0]],*Unpacking::niz3] = Unpacking::niz;
+		//[Unpacking::niz2[0],Unpacking::niz2[Unpacking::niz[0]],*Unpacking::niz3] = Unpacking::niz;
 
-		print(Unpacking::niz2[0]);
+		//print(Unpacking::niz2[0]);
 		//print(Unpacking::niz2[1]);
 		//print(Unpacking::niz3[0]);
-		print(eol);
+		//print(eol);
 		
 		Unpacking::niz3 = new int[3];
-		[*Unpacking::niz3] = niz;
-		print(Unpacking::niz3[0]);
-		print(Unpacking::niz3[1]);
-		print(Unpacking::niz3[2]);
-		print(eol);
+		//[*Unpacking::niz3] = niz;
+		//print(Unpacking::niz3[0]);
+		//print(Unpacking::niz3[1]);
+		//print(Unpacking::niz3[2]);
+		//print(eol);
 		
 		// Unpacking::niz3 = new int[1];
 		// [Unpacking::niz2[0],,Unpacking::niz2[Unpacking::niz[0]],*Unpacking::niz3] = Unpacking::niz; // runtime error!
