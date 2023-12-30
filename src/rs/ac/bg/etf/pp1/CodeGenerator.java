@@ -12,10 +12,17 @@ import rs.etf.pp1.symboltable.*;
 
 public class CodeGenerator extends VisitorAdaptor {
 	private int mainPc;
+	
 	private Stack<List<Integer>> andConditionPatch = new Stack<>();
 	private Stack<List<Integer>> orConditionPatch = new Stack<>();
 	private Stack<List<Integer>> termConditionPatch = new Stack<>();
+	private Stack<List<Integer>> loopStartConditionPatch = new Stack<>();
+	private Stack<List<Integer>> loopEndConditionPatch = new Stack<>();
+	private Stack<List<Integer>> loopBodyPatch = new Stack<>();
+	private Stack<List<Integer>> afterLoopConditionPatch = new Stack<>();
+	
 	private int condTermCount = 0;
+	private boolean loopBegin = false;
 	
 	public int getMainPc() {
 		return this.mainPc;
@@ -204,25 +211,41 @@ public class CodeGenerator extends VisitorAdaptor {
 		int n = (array.getType().struct == Tab.charType ? 0 : 1);
 		Code.put(n);
 	}
-	
+
 	public void visit(SingleExprCond expr) {
 		SyntaxNode factor = expr.getParent(), term = factor.getParent();
-
-		if (condTermCount == 1) {
+		
+		if (loopBegin) {
+			// skokovi za petlje
 			Code.loadConst(1);
 			Code.putFalseJump(Code.eq, 0);
-			andConditionPatch.peek().add(Code.pc - 2);
+			loopEndConditionPatch.peek().add(Code.pc - 2);
+			
+			Code.putJump(0);
+			loopBodyPatch.peek().add(Code.pc - 2);
+			afterLoopConditionPatch.peek().add(Code.pc);
+			
 		} else {
-			if (term instanceof SingleConditionTerm || term instanceof MultipleConditionTerms) {
-				Code.loadConst(1);
-				Code.putFalseJump(Code.ne, 0);
-				orConditionPatch.peek().add(Code.pc - 2);
-			} else {
+			// skokovi za if-else kontrolne strukture
+			if (condTermCount == 1) {
 				Code.loadConst(1);
 				Code.putFalseJump(Code.eq, 0);
-				termConditionPatch.peek().add(Code.pc - 2);
+				andConditionPatch.peek().add(Code.pc - 2);
+				
+			} else {
+				if (term instanceof SingleConditionTerm || term instanceof MultipleConditionTerms) {
+					Code.loadConst(1);
+					Code.putFalseJump(Code.ne, 0);
+					orConditionPatch.peek().add(Code.pc - 2);
+				} else {
+					Code.loadConst(1);
+					Code.putFalseJump(Code.eq, 0);
+					termConditionPatch.peek().add(Code.pc - 2);
+				}
 			}
 		}
+
+		
 	}
 	
 	private int getRelop(Relop op) {
@@ -248,19 +271,28 @@ public class CodeGenerator extends VisitorAdaptor {
 		SyntaxNode factor = expr.getParent(), term = factor.getParent();
 		int relop = getRelop(expr.getRelop());
 		
-		if (condTermCount == 1) {
+		if (loopBegin) {
 			Code.putFalseJump(relop, 0);
-			andConditionPatch.peek().add(Code.pc - 2);
+			loopEndConditionPatch.peek().add(Code.pc - 2);
+			Code.putJump(0);
+			loopBodyPatch.peek().add(Code.pc - 2);
+			afterLoopConditionPatch.peek().add(Code.pc);
 		} else {
-			if (term instanceof SingleConditionTerm || term instanceof MultipleConditionTerms) {
-				Code.put(Code.jcc + relop); 
-				Code.put2(0);
-				orConditionPatch.peek().add(Code.pc - 2);
-			} else {
+			if (condTermCount == 1) {
 				Code.putFalseJump(relop, 0);
-				termConditionPatch.peek().add(Code.pc - 2);
+				andConditionPatch.peek().add(Code.pc - 2);
+			} else {
+				if (term instanceof SingleConditionTerm || term instanceof MultipleConditionTerms) {
+					Code.put(Code.jcc + relop); 
+					Code.put2(0);
+					orConditionPatch.peek().add(Code.pc - 2);
+				} else {
+					Code.putFalseJump(relop, 0);
+					termConditionPatch.peek().add(Code.pc - 2);
+				}
 			}
 		}
+		
 	}
 	
 	public void visit(IfStart ifStart) {
@@ -274,6 +306,8 @@ public class CodeGenerator extends VisitorAdaptor {
 		condition.traverseTopDown(counter);
 		
 		condTermCount = counter.getCount();
+		
+		loopBegin = false;
 	}
 	
 	public void visit(IfStatement ifStmt) {
@@ -325,5 +359,51 @@ public class CodeGenerator extends VisitorAdaptor {
 			Code.fixup(address);
 		}
 		termConditionPatch.peek().clear();
+	}
+	
+	public void visit(ForStart forStart) {
+		loopStartConditionPatch.push(new ArrayList<Integer>());
+		loopEndConditionPatch.push(new ArrayList<Integer>());
+		loopBodyPatch.push(new ArrayList<Integer>());
+		afterLoopConditionPatch.push(new ArrayList<Integer>());
+		
+		loopBegin = true;
+	}
+	
+	public void visit(LoopStart loopStart) {
+		loopStartConditionPatch.peek().add(Code.pc);
+	}
+	
+	public void visit(LoopBody loopBody) {
+		for (int address : loopBodyPatch.peek()) {
+			Code.fixup(address);
+		}
+	}
+	
+	public void visit(BeforeLoopBody beforeLoop) {
+		int offset = loopStartConditionPatch.peek().get(0) - Code.pc;
+		Code.put(Code.jmp);
+		Code.put2(offset);
+	}
+	
+	public void visit(ForStatement forStmt) {
+		
+		int offset = afterLoopConditionPatch.peek().get(0) - Code.pc;
+		Code.put(Code.jmp);
+		Code.put2(offset);
+		
+		for (int address : loopEndConditionPatch.peek()) {
+			Code.fixup(address);
+		}
+		
+		loopStartConditionPatch.pop();
+		loopEndConditionPatch.pop();
+		loopBodyPatch.pop();
+		afterLoopConditionPatch.pop();
+	}
+	
+	public void visit(DesignatorUnpacking unpack) {
+		// TODO
+		// dodati i proveru za petlju
 	}
 }

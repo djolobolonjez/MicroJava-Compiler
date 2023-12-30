@@ -14,10 +14,8 @@ namespace Test {
 			return x + y;
 		}
 		
-		int sub() {
-			x = 4;
-			y = 3;
-			return 1;
+		int sub(int x, int y) {
+			return x - y;
 		}
 	}
 }
@@ -48,7 +46,7 @@ int x;
 		w = new int[5];
 		w[0] = 3;
 
-		ret = Test::sub();		
+		ret = Test::sub(4, 3);		
 		
 		if (false || ret > 2 && x < 3) {
 			x++;
@@ -56,6 +54,13 @@ int x;
 			if (false || ret != 1 && x == 4) {
 				x--;
 			}
+		}
+		
+		for (x = 0; x < 3; x++) {
+			for (; y < 7; y++) {
+				print(y);
+			}
+			print(x);
 		}
 		
 		z = (x + 3) * y + w[0] + ret;

@@ -102,6 +102,9 @@ nonterminal IfCondition IfCondition;
 nonterminal IfStart IfStart;
 nonterminal ElseStart ElseStart;
 nonterminal ArraySquares ArraySquares;
+nonterminal LoopStart LoopStart;
+nonterminal LoopBody LoopBody;
+nonterminal BeforeLoopBody BeforeLoopBody;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
@@ -238,13 +241,20 @@ Statement ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new Designa
 			|
 			(PrintStatementWidth) PRINT LPAREN Expr:e COMMA NUMBER:width RPAREN SEMI {: RESULT=new PrintStatementWidth(e, width); RESULT.setLine(eleft); :}
 			|
-			(ForStatement) ForStart:F1 ForDesignatorStmtList:F2 SEMI ForCondition:F3 SEMI ForDesignatorStmtList:F4 RPAREN Statement:S5 {: RESULT=new ForStatement(F1, F2, F3, F4, S5); RESULT.setLine(F1left); :}
+			(ForStatement) ForStart:F1 ForDesignatorStmtList:F2 SEMI LoopStart:L3 
+			ForCondition:F4 SEMI ForDesignatorStmtList:F5 BeforeLoopBody:B6 RPAREN LoopBody:L7 Statement:S8 {: RESULT=new ForStatement(F1, F2, L3, F4, F5, B6, L7, S8); RESULT.setLine(F1left); :}
 			|
 			(BlockStatementList) LBRACE StatementList:S1 RBRACE {: RESULT=new BlockStatementList(S1); RESULT.setLine(S1left); :}
 			|
 			(StatementError) error SEMI:l
 			{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null); :} {: RESULT=new StatementError(); :}
 			;
+			
+BeforeLoopBody ::= (BeforeLoopBody) {: RESULT=new BeforeLoopBody(); :} /* epsilon */;
+			
+LoopStart ::= (LoopStart) {: RESULT=new LoopStart(); :} /* epsilon */;
+
+LoopBody ::= (LoopBody) {: RESULT=new LoopBody(); :} /* epsilon */;
 			
 ForStart ::= (ForStart) FOR LPAREN {: RESULT=new ForStart(); :};
 			
@@ -280,7 +290,7 @@ CondTerm ::= (MultipleConditionFactors) CondTerm:C1 AND CondFact:C2 {: RESULT=ne
 		   (SingleConditionFactor) CondFact:C1 {: RESULT=new SingleConditionFactor(C1); RESULT.setLine(C1left); :}
 		   ;
 		   
-CondFact ::= (SingleExprCond) Expr:exp {: RESULT=new SingleExprCond(exp); RESULT.setLine(expleft); :}
+CondFact ::= (SingleExprCond) Expr:exp {: RESULT=new SingleExprCond(exp); RESULT.setLine(expleft); :}	
 		   |
 		   (MultipleExprCond) Expr:exp1 Relop:R1 Expr:exp2 {: RESULT=new MultipleExprCond(exp1, R1, exp2); RESULT.setLine(exp1left); :}
 		   ;

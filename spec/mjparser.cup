@@ -84,6 +84,7 @@ nonterminal DesignatorStatement, DesignatorStmtList;
 nonterminal ForDesignatorStmtList, ForCondition, ForStart;
 nonterminal IfCondition, IfStart, ElseStart;
 nonterminal ArraySquares;
+nonterminal LoopStart, LoopBody, BeforeLoopBody;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
@@ -220,13 +221,20 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(PrintStatementWidth) PRINT LPAREN Expr:e COMMA NUMBER:width RPAREN SEMI
 			|
-			(ForStatement) ForStart ForDesignatorStmtList SEMI ForCondition SEMI ForDesignatorStmtList RPAREN Statement
+			(ForStatement) ForStart ForDesignatorStmtList SEMI LoopStart 
+			ForCondition SEMI ForDesignatorStmtList BeforeLoopBody RPAREN LoopBody Statement
 			|
 			(BlockStatementList) LBRACE StatementList RBRACE
 			|
 			(StatementError) error SEMI:l
 			{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null); :}
 			;
+			
+BeforeLoopBody ::= (BeforeLoopBody) /* epsilon */;
+			
+LoopStart ::= (LoopStart) /* epsilon */;
+
+LoopBody ::= (LoopBody) /* epsilon */;
 			
 ForStart ::= (ForStart) FOR LPAREN;
 			
@@ -262,7 +270,7 @@ CondTerm ::= (MultipleConditionFactors) CondTerm AND CondFact
 		   (SingleConditionFactor) CondFact
 		   ;
 		   
-CondFact ::= (SingleExprCond) Expr:exp
+CondFact ::= (SingleExprCond) Expr:exp	
 		   |
 		   (MultipleExprCond) Expr:exp1 Relop Expr:exp2
 		   ;
