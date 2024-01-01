@@ -55,6 +55,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(ProgramName programName) {
 		programName.obj = Tab.insert(Obj.Prog, programName.getProgramName(), Tab.noType);
 		Tab.openScope();
+		Obj indexNode = Tab.insert(Obj.Var, "$1", Tab.intType);
+		Obj leftIndexNode = Tab.insert(Obj.Var, "$2", Tab.intType);
+		
+		Helper helperInstance = Helper.getInstance();
+		helperInstance.setIndexNode(indexNode);
+		helperInstance.setLeftIndexNode(leftIndexNode);
 	}
 	
 	public void visit(Program program) {
@@ -609,7 +615,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		multipleDesignatorTypes.clear();
 	}
 	
-	public void visit(DesignatorListElement unpackedElement) {
+	public void visit(DesignatorExists unpackedElement) {
 		int elementKind = unpackedElement.getDesignator().obj.getKind();
 		
 		if (elementKind != Obj.Var && elementKind != Obj.Elem) {

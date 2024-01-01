@@ -2,7 +2,7 @@ program code1
 
 namespace Test {
 
-	int x, y, z;
+	int arr[], x, y, z;
 	const int num = 5;
 	{
 		int add()
@@ -31,7 +31,7 @@ int x;
 	}
 	
 	void main() 
-	int y, z, w[], ret, arr[];
+	int y, z, w[], ret, arr[], i;
 	char a;
 	{	
 		y = 5;
@@ -45,8 +45,13 @@ int x;
 		//print(a);
 		w = new int[5];
 		arr = new int[3];
-		w[0] = 3;
+		w[0] = 2;
 		w[1] = 7;
+		w[2] = 4;
+		w[3] = 1;
+		w[4] = 2;
+		
+		Test::arr = new int[2];
 
 		ret = Test::sub(4, 3);		
 		
@@ -68,10 +73,18 @@ int x;
 			}
 			print(x);
 		}
-		[,x,y,*arr] = w;
-		z = (x + 3) * y + w[0] + ret;
-		
+		x = 101;
+		[,Test::arr[0],,i,Test::arr[1],*arr] = w;
+		print(y);
+		z = (Test::arr[0] + 3) * y + i + ret + w[2];
+		print(x);
 		print(z);
+		for (i = 0; i < 2; i++) {
+			print(Test::arr[i]);
+		}
+		for (i = 0; i < 5; i++) {
+			print(w[i]);
+		}
 	}
 
 }

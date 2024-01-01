@@ -85,6 +85,7 @@ nonterminal ForDesignatorStmtList, ForCondition, ForStart;
 nonterminal IfCondition, IfStart, ElseStart;
 nonterminal ArraySquares;
 nonterminal LoopStart, LoopBody, BeforeLoopBody;
+nonterminal DesignatorChoice;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
@@ -324,12 +325,15 @@ DesignatorStatement ::= (DesignatorAssignment) Designator:d Assignop Expr:e
 					  (DesignatorUnpacking) LSQUARE DesignatorStmtList MUL Designator:d1 RSQUARE ASSIGN Designator:d2
 					  ;
 				 
-DesignatorStmtList ::= (DesignatorListEmpty) DesignatorStmtList COMMA 
+DesignatorStmtList ::= (DesignatorListElement) DesignatorStmtList COMMA DesignatorChoice
 					 |
-					 (DesignatorListElement) DesignatorStmtList Designator:d COMMA
-					 |
-					 (NoDesignatorStmtList) /* epsilon */
+					 (LastDesignator) DesignatorChoice
 					 ;
+					 
+DesignatorChoice ::= (DesignatorExists) Designator
+				   |
+				   (NoDesignator) /* epsilon */
+				   ;
 				 
 ActPars ::= (ActualPars) ActParsList
 		  |

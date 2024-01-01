@@ -105,6 +105,7 @@ nonterminal ArraySquares ArraySquares;
 nonterminal LoopStart LoopStart;
 nonterminal LoopBody LoopBody;
 nonterminal BeforeLoopBody BeforeLoopBody;
+nonterminal DesignatorChoice DesignatorChoice;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
@@ -344,12 +345,15 @@ DesignatorStatement ::= (DesignatorAssignment) Designator:d Assignop:A1 Expr:e {
 					  (DesignatorUnpacking) LSQUARE DesignatorStmtList:D1 MUL Designator:d1 RSQUARE ASSIGN Designator:d2 {: RESULT=new DesignatorUnpacking(D1, d1, d2); RESULT.setLine(D1left); :}
 					  ;
 				 
-DesignatorStmtList ::= (DesignatorListEmpty) DesignatorStmtList:D1 COMMA {: RESULT=new DesignatorListEmpty(D1); RESULT.setLine(D1left); :} 
+DesignatorStmtList ::= (DesignatorListElement) DesignatorStmtList:D1 COMMA DesignatorChoice:D2 {: RESULT=new DesignatorListElement(D1, D2); RESULT.setLine(D1left); :}
 					 |
-					 (DesignatorListElement) DesignatorStmtList:D1 Designator:d COMMA {: RESULT=new DesignatorListElement(D1, d); RESULT.setLine(D1left); :}
-					 |
-					 (NoDesignatorStmtList) {: RESULT=new NoDesignatorStmtList(); :} /* epsilon */
+					 (LastDesignator) DesignatorChoice:D1 {: RESULT=new LastDesignator(D1); RESULT.setLine(D1left); :}
 					 ;
+					 
+DesignatorChoice ::= (DesignatorExists) Designator:D1 {: RESULT=new DesignatorExists(D1); RESULT.setLine(D1left); :}
+				   |
+				   (NoDesignator) {: RESULT=new NoDesignator(); :} /* epsilon */
+				   ;
 				 
 ActPars ::= (ActualPars) ActParsList:A1 {: RESULT=new ActualPars(A1); RESULT.setLine(A1left); :}
 		  |

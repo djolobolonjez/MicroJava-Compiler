@@ -13,6 +13,8 @@ import rs.etf.pp1.symboltable.*;
 public class CodeGenerator extends VisitorAdaptor {
 	private int mainPc;
 	
+	Obj indexNode = null, leftIndexNode = null;
+	
 	private Stack<List<Integer>> andConditionPatch = new Stack<>();
 	private Stack<List<Integer>> orConditionPatch = new Stack<>();
 	private Stack<List<Integer>> termConditionPatch = new Stack<>();
@@ -26,6 +28,32 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	private int condTermCount = 0;
 	private boolean loopBegin = false;
+	
+	public CodeGenerator() {
+		// len, chr i ord 
+		
+		Tab.lenObj.setAdr(Code.pc);
+		Code.put(Code.enter);
+		Code.put(1); Code.put(1);
+		Code.put(Code.load_n);
+		Code.put(Code.arraylength);
+		Code.put(Code.exit);
+		Code.put(Code.return_);
+		
+		Tab.chrObj.setAdr(Code.pc);
+		Code.put(Code.enter);
+		Code.put(1); Code.put(1);
+		Code.put(Code.load_n);
+		Code.put(Code.exit);
+		Code.put(Code.return_);
+		
+		Tab.ordObj.setAdr(Code.pc);
+		Code.put(Code.enter);
+		Code.put(1); Code.put(1);
+		Code.put(Code.load_n);
+		Code.put(Code.exit);
+		Code.put(Code.return_);
+	}
 	
 	public int getMainPc() {
 		return this.mainPc;
@@ -113,23 +141,45 @@ public class CodeGenerator extends VisitorAdaptor {
 	public void visit(DesignatorVariable var) {
 		SyntaxNode parent = var.getParent();
 		if (!(parent instanceof DesignatorAssignment || parent instanceof FunctionCall || 
-			  parent instanceof DesignatorListElement || parent instanceof DesignatorUnpacking
+			  parent instanceof DesignatorExists || parent instanceof DesignatorUnpacking
 			)) {
 			Code.load(var.obj);
 		}
 		
-		if (parent instanceof DesignatorListElement) {
+		if (parent instanceof DesignatorExists) {
+			assignmentDesignators.add(var.obj);
+		} else if (parent instanceof DesignatorUnpacking) {
+			assignmentArrayDesignators.add(var.obj);
+		}
+		
+	}
+	
+	public void visit(DesignatorNamespace var) {
+		SyntaxNode parent = var.getParent();
+		if (!(parent instanceof DesignatorAssignment || parent instanceof FunctionCall || 
+			  parent instanceof DesignatorExists || parent instanceof DesignatorUnpacking)) {
+			Code.load(var.obj);
+		}
+		
+		if (parent instanceof DesignatorExists) {
 			assignmentDesignators.add(var.obj);
 		} else if (parent instanceof DesignatorUnpacking) {
 			assignmentArrayDesignators.add(var.obj);
 		}
 	}
 	
-	public void visit(DesignatorNamespace var) {
-		SyntaxNode parent = var.getParent();
-		if (!(parent instanceof DesignatorAssignment || parent instanceof FunctionCall)) {
-			Code.load(var.obj);
+	public void visit(DesignatorListArray elem) {
+		SyntaxNode parent = elem.getParent();
+		
+		if (parent instanceof DesignatorExists) {
+			assignmentDesignators.add(elem.obj);
+		} else if (parent instanceof DesignatorUnpacking) {
+			assignmentArrayDesignators.add(elem.obj);
 		}
+	}
+	
+	public void visit(NoDesignator noDesignator) {
+		assignmentDesignators.add(Tab.noObj);
 	}
 	
 	public void visit(DesignatorAssignment assign) {
@@ -421,10 +471,14 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	public void visit(DesignatorUnpacking unpack) {
+		int index = 0;		
+		// poslednji element je visak zbog epsilon smene pre *designator
+		assignmentDesignators.remove(assignmentDesignators.size() - 1);
 		
-		int index = 0;
+		System.out.println(assignmentDesignators.size());
+		
 		Obj arrayNode = assignmentArrayDesignators.get(1);
-		// dodati proveru za duzinu niza
+		// provera za duzinu niza
 		Code.loadConst(assignmentDesignators.size());
 		Code.load(arrayNode);
 		Code.put(Code.arraylength);
@@ -432,16 +486,108 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.put(Code.trap);
 		Code.put(Code.const_1);
 		
-		for (Obj obj : assignmentDesignators) {
-			Code.load(arrayNode);
-			Code.loadConst(index++);
-			if (arrayNode.getType() == Tab.charType) {
-				Code.put(Code.baload);
-			} else {
-				Code.put(Code.aload);
+		for (int i = 0; i < assignmentDesignators.size(); i++) {
+			Obj obj = assignmentDesignators.get(i);
+			if (obj == Tab.noObj) {
+				System.out.println("INDEKS: " + i);
+				continue;
 			}
-			Code.store(obj);
+			
+			if (obj.getKind() != Obj.Elem) {
+				Code.load(arrayNode);
+				Code.loadConst(i);
+				if (arrayNode.getType() == Tab.charType) {
+					Code.put(Code.baload);
+				} else {
+					Code.put(Code.aload);
+				}
+				Code.store(obj);
+			}
 		}
+		
+		for (int i = assignmentDesignators.size() - 1; i >= 0; i--) {
+			Obj obj = assignmentDesignators.get(i);
+			if (obj == Tab.noObj) {
+				continue;
+			}
+			
+			if (obj.getKind() == Obj.Elem) {
+				Code.load(arrayNode);
+				Code.loadConst(i);
+				if (arrayNode.getType() == Tab.charType) {
+					Code.put(Code.baload);
+				} else {
+					Code.put(Code.aload);
+				}
+				Code.store(obj);
+			}
+		}
+		
+		indexNode = Helper.getInstance().getIndexNode();
+		leftIndexNode = Helper.getInstance().getLeftIndexNode();
+		
+		Obj leftArrayNode = assignmentArrayDesignators.get(0);
+		index = assignmentDesignators.size();
+		int leftIndex = 0;
+		
+		Code.loadConst(index);
+		Code.put(Code.putstatic);
+		Code.put2(indexNode.getAdr());
+		Code.loadConst(leftIndex);
+		Code.put(Code.putstatic);
+		Code.put2(leftIndexNode.getAdr());
+		
+		int indexCheck = Code.pc;
+		
+		Code.load(arrayNode);
+		Code.put(Code.arraylength);
+		Code.put(Code.getstatic);
+		Code.put2(indexNode.getAdr());
+		Code.putFalseJump(Code.ne, 0);
+		
+		int fixAddressOne = Code.pc - 2;
+		
+		Code.load(leftArrayNode);
+		Code.put(Code.arraylength);
+		Code.put(Code.getstatic);
+		Code.put2(leftIndexNode.getAdr());
+		Code.putFalseJump(Code.ne, 0);
+		
+		int fixAddressTwo = Code.pc - 2;
+		
+		Code.load(leftArrayNode);
+		Code.put(Code.getstatic);
+		Code.put2(leftIndexNode.getAdr());
+		Code.load(arrayNode);
+		Code.put(Code.getstatic);
+		Code.put2(indexNode.getAdr());
+		
+		if (arrayNode.getType() == Tab.charType) {
+			Code.put(Code.baload);
+			Code.put(Code.bastore);
+		} else {
+			Code.put(Code.aload);
+			Code.put(Code.astore);
+		}
+		
+		Code.put(Code.getstatic);
+		Code.put2(leftIndexNode.getAdr());
+		Code.loadConst(1);
+		Code.put(Code.add);
+		Code.put(Code.putstatic);
+		Code.put2(leftIndexNode.getAdr());
+		
+		Code.put(Code.getstatic);
+		Code.put2(indexNode.getAdr());
+		Code.loadConst(1);
+		Code.put(Code.add);
+		Code.put(Code.putstatic);
+		Code.put2(indexNode.getAdr());
+		
+		Code.putJump(indexCheck);
+		
+		Code.fixup(fixAddressOne);
+		Code.fixup(fixAddressTwo);
 		
 		assignmentDesignators.clear();
 		assignmentArrayDesignators.clear();
