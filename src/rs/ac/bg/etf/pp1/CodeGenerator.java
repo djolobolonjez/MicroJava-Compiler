@@ -478,8 +478,13 @@ public class CodeGenerator extends VisitorAdaptor {
 		System.out.println(assignmentDesignators.size());
 		
 		Obj arrayNode = assignmentArrayDesignators.get(1);
+		Obj leftArrayNode = assignmentArrayDesignators.get(0);
+		
 		// provera za duzinu niza
 		Code.loadConst(assignmentDesignators.size());
+		Code.load(leftArrayNode);
+		Code.put(Code.arraylength);
+		Code.put(Code.add);
 		Code.load(arrayNode);
 		Code.put(Code.arraylength);
 		Code.putFalseJump(Code.gt, Code.pc + 5);
@@ -526,7 +531,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		indexNode = Helper.getInstance().getIndexNode();
 		leftIndexNode = Helper.getInstance().getLeftIndexNode();
 		
-		Obj leftArrayNode = assignmentArrayDesignators.get(0);
 		index = assignmentDesignators.size();
 		int leftIndex = 0;
 		
@@ -545,15 +549,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.put2(indexNode.getAdr());
 		Code.putFalseJump(Code.ne, 0);
 		
-		int fixAddressOne = Code.pc - 2;
-		
-		Code.load(leftArrayNode);
-		Code.put(Code.arraylength);
-		Code.put(Code.getstatic);
-		Code.put2(leftIndexNode.getAdr());
-		Code.putFalseJump(Code.ne, 0);
-		
-		int fixAddressTwo = Code.pc - 2;
+		int fixAddress = Code.pc - 2;
 		
 		Code.load(leftArrayNode);
 		Code.put(Code.getstatic);
@@ -586,8 +582,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		
 		Code.putJump(indexCheck);
 		
-		Code.fixup(fixAddressOne);
-		Code.fixup(fixAddressTwo);
+		Code.fixup(fixAddress);
 		
 		assignmentDesignators.clear();
 		assignmentArrayDesignators.clear();
