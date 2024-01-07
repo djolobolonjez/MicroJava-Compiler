@@ -188,7 +188,6 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	public void visit(FunctionCall function) {
 		Obj funcObj = function.getDesignator().obj;
-		System.out.println(funcObj.getName());
 		int offset = funcObj.getAdr() - Code.pc;
 		Code.put(Code.call);
 		Code.put2(offset);
@@ -475,8 +474,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		// poslednji element je visak zbog epsilon smene pre *designator
 		assignmentDesignators.remove(assignmentDesignators.size() - 1);
 		
-		System.out.println(assignmentDesignators.size());
-		
 		Obj arrayNode = assignmentArrayDesignators.get(1);
 		Obj leftArrayNode = assignmentArrayDesignators.get(0);
 		
@@ -494,7 +491,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		for (int i = 0; i < assignmentDesignators.size(); i++) {
 			Obj obj = assignmentDesignators.get(i);
 			if (obj == Tab.noObj) {
-				System.out.println("INDEKS: " + i);
 				continue;
 			}
 			
