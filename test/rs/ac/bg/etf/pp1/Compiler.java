@@ -36,7 +36,7 @@ public class Compiler {
 			inputFilename = args[0];
 			outputFilename = args[1];
 		} else {
-			log.error("Missing prgoram arguments! Usage: Compiler <source-file> <object-file>");
+			log.error("Missing program arguments! Usage: Compiler <source-file> <object-file>");
 		}
 		
 		

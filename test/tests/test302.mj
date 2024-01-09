@@ -3,7 +3,7 @@
 program test302
 
 namespace Addition{
-
+	int z;
 	{
 	
 	int sum(int z, int d)

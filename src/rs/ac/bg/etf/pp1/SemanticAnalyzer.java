@@ -217,12 +217,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		String symName = varName;
 		
 		if (currentNamespace != null) {
-			symName = currentNamespace + "::" + varName;
+			if (currentMethod == null) {
+				symName = currentNamespace + "::" + varName;
+			}
 			if (isNamespaceSymbolDeclared(symName)) {
 				report_error("Promenljiva " + varName + " je vec deklarisana unutar " 
 							+ currentNamespace + " prostora imena", info);
 				return;
 			}
+			
 		} else {
 			if (isSymbolAlreadyDeclared(symName)) {
 				report_error("Promenljiva sa imenom " + varName + " je vec deklarisana! Greska", info);
@@ -262,13 +265,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(DesignatorVariable designator) {
 		String name = designator.getIdentName();
-		if (currentNamespace != null) {
-			name = currentNamespace + "::" + designator.getIdentName();
-		}
+		
 		designator.obj = Tab.find(name);
+		if (currentNamespace != null && designator.obj == Tab.noObj) {
+			name = currentNamespace + "::" + designator.getIdentName();
+			designator.obj = Tab.find(name);
+		}
 		
 		if (designator.obj == Tab.noObj) {
-			report_error("Promenljiva mora biti deklarisana pre upotrebe", designator);
+			report_error("Promenljiva " + name + " mora biti deklarisana pre upotrebe", designator);
 		}
 	}
 	
@@ -428,9 +433,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (variableIsArray) {
 			formalParamType = new Struct(Struct.Array, currentType);
 		}
-		if (currentNamespace != null) {
-			paramName = currentNamespace + "::" + formalParam.getParamName();
+		
+		if (isSymbolAlreadyDeclared(paramName)) {
+			report_error("Promenljiva sa imenom " + paramName + " je vec deklarisana! Greska", formalParam);
+			variableIsArray = false;
+			return;
 		}
+		
 		Tab.insert(Obj.Var, paramName, formalParamType);
 		
 		report_info("Pronadjen parametar " + paramName + " funkcije " 
