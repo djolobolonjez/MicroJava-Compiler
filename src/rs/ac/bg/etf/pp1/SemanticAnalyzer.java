@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
@@ -31,7 +32,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	private ArrayList<Struct> multipleDesignatorTypes = new ArrayList<>();
 	
-	private ArrayList<Struct> actualParams = new ArrayList<>();
+	private Stack<ArrayList<Struct>> actualParams = new Stack<>();
 	
 	Logger log = Logger.getLogger(getClass());
 	
@@ -337,7 +338,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Collection<Obj> formalParams = obj.getLocalSymbols();
 		int numParams = obj.getLevel();
 		
-		if (numParams != actualParams.size()) {
+		ArrayList<Struct> actPars = actualParams.pop();
+		
+		if (numParams != actPars.size()) {
 			report_error("Broj formalnih argumenata ne odgovara broju stvarnih parametara funkcije", info);
 			return;
 		}
@@ -346,15 +349,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		
 		for (int i = 0; i < numParams; i++) {
 			Obj nextParam = iter.next();
-			if (!nextParam.getType().assignableTo(actualParams.get(i))) {
+			if (!nextParam.getType().assignableTo(actPars.get(i))) {
 				report_error("Tip formalnog parametra i stvarnog argumenta se ne poklapa", info);
 			} 
 		}
-		actualParams.clear();
 	}
 	
 	public void visit(FunctionCall function) {
-		Obj functionNode = function.getDesignator().obj;
+		Obj functionNode = function.getFunctionName().getDesignator().obj;
 		
 		if (!isFunction(functionNode, function)) {
 			return;
@@ -464,13 +466,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(ActualParam param) {
 		report_info("Argument funkcije tipa " + 
 				typeCodeToType(param.getExpr().struct.getKind()), param);
-		actualParams.add(param.getExpr().struct);
+		actualParams.peek().add(param.getExpr().struct);
 	}
 	
 	public void visit(ActualParams param) {
 		report_info("Argument funkcije tipa " + 
 				typeCodeToType(param.getExpr().struct.getKind()), param);
-		actualParams.add(param.getExpr().struct);
+		actualParams.peek().add(param.getExpr().struct);
 	}
 	
 	public void visit(ExprSingleTerm expr) {
@@ -529,14 +531,17 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		var.struct = var.getDesignator().obj.getType();
 	}
 	
+	public void visit(FunctionName func) {
+		actualParams.push(new ArrayList<>());
+	}
+	
 	public void visit(FactorDesignatorFunction func) {
-		Obj funcNode = func.getDesignator().obj;
+		Obj funcNode = func.getFunctionName().getDesignator().obj;
 		
 		func.struct = funcNode.getType();
 		if (!isFunction(funcNode, func)) {
 			func.struct = Tab.noType;
 		}
-		
 		if (func.struct == Tab.noType) {
 			report_error("Funkcija koja nema povratnu vrednost ne moze se koristiti za evaluaciju izraza", func);
 			return;

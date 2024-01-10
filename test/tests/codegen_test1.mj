@@ -5,12 +5,9 @@ namespace Test {
 	int arr[], x, y, z;
 	const int num = 5;
 	{
-		int add()
+		int add(int x, int y)
 		int local;
 		 {
-			x = 3;
-			y = 4;
-			print(x + y);
 			return x + y;
 		}
 		
@@ -74,7 +71,7 @@ int x;
 			print(x);
 		}
 		x = 101;
-		[,Test::arr[0],,i,Test::arr[1],*arr] = w;
+		[Test::arr[0],i,*arr] = w;
 		print(y);
 		z = (Test::arr[0] + 3) * y + i + ret + w[2];
 		print(x);
@@ -85,6 +82,10 @@ int x;
 		for (i = 0; i < 5; i++) {
 			print(w[i]);
 		}
+		
+		print(eol);
+		print(Test::sub(Test::add(3, 5), Test::add(2, 5)));
+		
 	}
 
 }

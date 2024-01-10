@@ -84,6 +84,7 @@ nonterminal IfCondition, IfStart, ElseStart;
 nonterminal ArraySquares;
 nonterminal LoopStart, LoopBody, BeforeLoopBody;
 nonterminal DesignatorChoice;
+nonterminal FunctionName;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
@@ -288,7 +289,7 @@ Term ::= (TermMultipleFactors) Term:fterm Mulop Factor:f
 	   
 Factor ::= (FactorDesignatorVar) Designator:varName
 		 |
-		 (FactorDesignatorFunction) Designator LPAREN ActPars RPAREN
+		 (FactorDesignatorFunction) FunctionName LPAREN ActPars RPAREN
 		 | 
 		 (FactorConstNum) NUMBER:value
 		 |
@@ -314,7 +315,7 @@ Designator ::= (DesignatorNamespace) IDENT:outerTypeName COLON COLON IDENT:inner
 				 
 DesignatorStatement ::= (DesignatorAssignment) Designator:d Assignop Expr:e
 					  |
-					  (FunctionCall) Designator:d LPAREN ActPars RPAREN
+					  (FunctionCall) FunctionName LPAREN ActPars RPAREN
 					  |
 					  (DesignatorIncrement) Designator:d INC
 					  |
@@ -322,6 +323,8 @@ DesignatorStatement ::= (DesignatorAssignment) Designator:d Assignop Expr:e
 					  |
 					  (DesignatorUnpacking) LSQUARE DesignatorStmtList MUL Designator:d1 RSQUARE ASSIGN Designator:d2
 					  ;
+					  
+FunctionName ::= (FunctionName) Designator;
 				 
 DesignatorStmtList ::= (DesignatorListElement) DesignatorStmtList COMMA DesignatorChoice
 					 |

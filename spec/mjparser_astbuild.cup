@@ -104,6 +104,7 @@ nonterminal LoopStart LoopStart;
 nonterminal LoopBody LoopBody;
 nonterminal BeforeLoopBody BeforeLoopBody;
 nonterminal DesignatorChoice DesignatorChoice;
+nonterminal FunctionName FunctionName;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgramName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Designator, MethodTypeAndName, MethodDecl;
@@ -308,7 +309,7 @@ Term ::= (TermMultipleFactors) Term:fterm Mulop:M1 Factor:f {: RESULT=new TermMu
 	   
 Factor ::= (FactorDesignatorVar) Designator:varName {: RESULT=new FactorDesignatorVar(varName); RESULT.setLine(varNameleft); :}
 		 |
-		 (FactorDesignatorFunction) Designator:D1 LPAREN ActPars:A2 RPAREN {: RESULT=new FactorDesignatorFunction(D1, A2); RESULT.setLine(D1left); :}
+		 (FactorDesignatorFunction) FunctionName:F1 LPAREN ActPars:A2 RPAREN {: RESULT=new FactorDesignatorFunction(F1, A2); RESULT.setLine(F1left); :}
 		 | 
 		 (FactorConstNum) NUMBER:value {: RESULT=new FactorConstNum(value); RESULT.setLine(valueleft); :}
 		 |
@@ -334,7 +335,7 @@ Designator ::= (DesignatorNamespace) IDENT:outerTypeName COLON COLON IDENT:inner
 				 
 DesignatorStatement ::= (DesignatorAssignment) Designator:d Assignop:A1 Expr:e {: RESULT=new DesignatorAssignment(d, A1, e); RESULT.setLine(dleft); :}
 					  |
-					  (FunctionCall) Designator:d LPAREN ActPars:A1 RPAREN {: RESULT=new FunctionCall(d, A1); RESULT.setLine(dleft); :}
+					  (FunctionCall) FunctionName:F1 LPAREN ActPars:A2 RPAREN {: RESULT=new FunctionCall(F1, A2); RESULT.setLine(F1left); :}
 					  |
 					  (DesignatorIncrement) Designator:d INC {: RESULT=new DesignatorIncrement(d); RESULT.setLine(dleft); :}
 					  |
@@ -342,6 +343,8 @@ DesignatorStatement ::= (DesignatorAssignment) Designator:d Assignop:A1 Expr:e {
 					  |
 					  (DesignatorUnpacking) LSQUARE DesignatorStmtList:D1 MUL Designator:d1 RSQUARE ASSIGN Designator:d2 {: RESULT=new DesignatorUnpacking(D1, d1, d2); RESULT.setLine(D1left); :}
 					  ;
+					  
+FunctionName ::= (FunctionName) Designator:D1 {: RESULT=new FunctionName(D1); RESULT.setLine(D1left); :};
 				 
 DesignatorStmtList ::= (DesignatorListElement) DesignatorStmtList:D1 COMMA DesignatorChoice:D2 {: RESULT=new DesignatorListElement(D1, D2); RESULT.setLine(D1left); :}
 					 |

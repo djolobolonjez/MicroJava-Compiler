@@ -187,7 +187,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	public void visit(FunctionCall function) {
-		Obj funcObj = function.getDesignator().obj;
+		Obj funcObj = function.getFunctionName().getDesignator().obj;
 		int offset = funcObj.getAdr() - Code.pc;
 		Code.put(Code.call);
 		Code.put2(offset);
@@ -198,7 +198,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	public void visit(FactorDesignatorFunction funcFactor) {
-		Obj funcObj = funcFactor.getDesignator().obj;
+		Obj funcObj = funcFactor.getFunctionName().getDesignator().obj;
 		int offset = funcObj.getAdr() - Code.pc;
 		Code.put(Code.call);
 		Code.put2(offset);	
