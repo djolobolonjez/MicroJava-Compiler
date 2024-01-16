@@ -52,26 +52,28 @@ int x;
 
 		ret = Test::sub(4, 3);		
 		
-		if (false || ret > 2 && x < 3) {
-			x++;
-		} else {
-			if (false || ret != 1 && x == 4) {
-				x--;
-			}
-		}
+		//if (false || ret > 2 && x < 3) {
+		//	x++;
+		//} else {
+		//	if (false || ret != 1 && x == 4) {
+		//		x--;
+		//	}
+		//}
 		
 		for (x = 0; x < 3; x++) {
 			for (; y < 7; y++) {
-				if (y == 6) {
-					break;
-				}
+			//	if (y == 6) {
+				//	break;
+				//}
 				continue;
 				print(y);
 			}
 			print(x);
 		}
 		x = 101;
-		[Test::arr[0],i,*arr] = w;
+	//	[Test::arr[0],i,*arr] = w;
+		Test::arr[0] = w[0];
+		i = w[1];
 		print(y);
 		z = (Test::arr[0] + 3) * y + i + ret + w[2];
 		print(x);

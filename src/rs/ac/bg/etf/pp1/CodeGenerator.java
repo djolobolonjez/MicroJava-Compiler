@@ -99,8 +99,13 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	public void visit(MethodDecl methodDecl) {
-		Code.put(Code.exit);
-		Code.put(Code.return_);
+		if (methodDecl.getMethodTypeAndName().obj.getType() == Tab.noType) {
+			Code.put(Code.exit);
+			Code.put(Code.return_);
+		} else {
+			Code.put(Code.trap);
+			Code.put(1);
+		}
 	}
 	
 	public void visit(FactorConstBoolean factor) {
